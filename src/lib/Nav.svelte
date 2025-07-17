@@ -1,0 +1,283 @@
+<script>
+	import Fa from 'svelte-fa';
+	import { faFacebook, faInstagram, faGithub } from '@fortawesome/free-brands-svg-icons';
+
+	let isOpen = false;
+
+	const screens = ['About', 'Curriculum'];
+	const pages = ['AnAlog', 'Solve', 'Join'];
+
+	const toggleMenu = () => {
+		isOpen = !isOpen;
+	};
+
+	const scroll = (id) => {
+		const element = document.getElementById(id);
+		if (!element) return;
+		const yCoordinate = element.getBoundingClientRect().top + window.scrollY;
+		window.scrollTo({ top: yCoordinate, behavior: 'smooth' });
+	};
+
+	const needToWorkOn = (page) => {
+		if (page === 'Join') {
+			alert('지금은 지원 기간이 아닙니다!');
+			return;
+		}
+		alert(`${page} 페이지는 현재 작업 중에 있습니다! 조금만 기다려주세요!`);
+	};
+
+	const handleResize = () => {
+		if (window.innerWidth > 768) {
+			isOpen = false;
+		}
+	};
+</script>
+
+<svelte:window on:resize={handleResize} />
+
+<div class="navbar-container">
+	<img class="logo-image" src="/logo.svg" alt="logo" on:click={() => scroll('landing')} />
+
+	<div class="hamburger-icon" on:click={toggleMenu} class:open={isOpen}>
+		<svg xmlns="http://www.w3.org/2000/svg" width="20" height="16" viewBox="0 0 20 16" fill="none">
+			<path d="M2 2L18 2" stroke="black" stroke-width="3" stroke-linecap="round" />
+			<path d="M2 8L18 8" stroke="black" stroke-width="3" stroke-linecap="round" />
+			<path d="M2 14H18" stroke="black" stroke-width="3" stroke-linecap="round" />
+		</svg>
+	</div>
+
+	<div class="navbar-menu" class:open={isOpen}>
+		<div class="navbar-menu-items">
+			{#each screens as screen, i}
+				<div
+					class="navbar-menu-item"
+					on:click={() => scroll(screen.toLowerCase())}
+					style="--delay-index: {i}"
+				>
+					{screen}
+				</div>
+			{/each}
+			{#each pages as page, i}
+				<div
+					class="navbar-menu-item"
+					on:click={() => needToWorkOn(page)}
+					style="--delay-index: {i + screens.length}"
+				>
+					{page}↗
+				</div>
+			{/each}
+		</div>
+
+		<div class="navbar-icons">
+			<div
+				class="navbar-icon"
+				on:click={() => window.open('https://www.facebook.com/sunrinana/', '_blank')}
+			>
+				<Fa icon={faFacebook} color="black" />
+			</div>
+			<div
+				class="navbar-icon"
+				on:click={() => window.open('https://instagram.com/sunrin_ana', '_blank')}
+			>
+				<Fa icon={faInstagram} color="black" />
+			</div>
+			<div
+				class="navbar-icon"
+				on:click={() => window.open('https://github.com/sunrin-ana', '_blank')}
+			>
+				<Fa icon={faGithub} color="black" />
+			</div>
+		</div>
+	</div>
+</div>
+
+<style>
+	@keyframes openMenuItem {
+		0% {
+			opacity: 0;
+			transform: translateY(-50%);
+		}
+		20% {
+			opacity: 1;
+		}
+		100% {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	.navbar-container {
+		position: fixed;
+		top: 0;
+		width: 100%;
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+		padding: 1.5rem 3rem;
+		z-index: 100;
+        background-color: #f9f9f9;
+	}
+
+	.logo-image {
+		width: 2rem;
+		height: 2rem;
+		cursor: pointer;
+		transition: transform 0.25s ease-out;
+	}
+	.logo-image:hover {
+		transform: scale(1.2);
+		transition: transform 0.25s ease-out;
+	}
+
+	.navbar-menu {
+		display: flex;
+		flex-direction: row;
+		margin-left: 3rem;
+		width: calc(100% - 13rem);
+		align-items: center;
+        background-color: #f9f9f9;
+	}
+
+	.navbar-menu-items {
+		display: flex;
+		flex-direction: row;
+		gap: 1rem;
+	}
+
+	.navbar-menu-item {
+		cursor: pointer;
+		position: relative;
+		color: rgb(109, 109, 109);
+		user-select: none;
+		height: fit-content;
+	}
+	.navbar-menu-item:hover {
+		color: black;
+	}
+	.navbar-menu-item::after {
+		content: '';
+		position: absolute;
+		width: 100%;
+		transform: scaleX(0);
+		height: 2px;
+		bottom: -2px;
+		left: 0;
+		background-color: black;
+		transform-origin: bottom left;
+		transition: transform 0.5s ease-out;
+	}
+	.navbar-menu-item:hover::after {
+		transform: scaleX(1);
+		transform-origin: bottom left;
+		transition: transform 0.5s cubic-bezier(0.25, 0, 0, 1);
+	}
+
+	.navbar-icons {
+		display: flex;
+		flex-direction: row;
+		margin-left: auto;
+		gap: 0.75rem;
+	}
+
+	.navbar-icon {
+		cursor: pointer;
+		font-size: 1.5rem;
+		transition: transform 0.25s ease-out;
+	}
+	.navbar-icon:hover {
+		transform: scale(1.2);
+		transition: transform 0.25s ease-out;
+	}
+
+	.hamburger-icon {
+		display: none;
+		cursor: pointer;
+		user-select: none;
+	}
+
+	/* Responsive Mobile Styles */
+	@media (max-width: 768px) {
+		.navbar-container {
+			padding: 1rem 0;
+			width: 100%;
+			justify-content: space-between;
+		}
+		.logo-image {
+			margin-left: 1rem;
+			transform: scale(1.1);
+		}
+
+		.navbar-menu {
+			flex-direction: column;
+			align-items: flex-start;
+			position: absolute;
+			top: 4rem;
+			width: 100%;
+			overflow: hidden;
+			padding: 0;
+			margin: 0 auto;
+
+			height: 0;
+			opacity: 0;
+			transition:
+				height 0.5s ease-out,
+				opacity 0.1s ease-out 0.4s;
+		}
+		.navbar-menu.open {
+			height: 100vh;
+			opacity: 1;
+			transition:
+				height 0.5s ease-out,
+				opacity 0.1s ease-out 0s;
+		}
+
+		.navbar-menu-items {
+			flex-direction: column;
+			align-items: flex-start;
+			gap: 0.25rem;
+		}
+
+		.navbar-menu-item {
+			margin: 0.5rem 1rem;
+			width: fit-content;
+			opacity: 0; /* Hidden by default when menu is closed */
+		}
+
+		.navbar-menu.open .navbar-menu-item {
+			opacity: 1;
+			animation: openMenuItem 0.5s ease-out forwards;
+			animation-delay: calc(0.5s + var(--delay-index) * 0.1s);
+			transition: opacity 0.5s ease-out;
+			transition-delay: calc(0.5s + var(--delay-index) * 0.1s);
+		}
+
+		.navbar-icons {
+			justify-content: flex-start;
+			margin: 0.5rem 1rem;
+			opacity: 0; /* Hidden by default when menu is closed */
+		}
+
+		.navbar-menu.open .navbar-icons {
+			opacity: 1;
+			animation: openMenuItem 0.5s ease-out forwards;
+			animation-delay: 1.1s;
+			transition: opacity 0.5s ease-out 1.1s;
+		}
+
+		.navbar-icon {
+			font-size: 2rem;
+		}
+
+		.hamburger-icon {
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			margin-right: 1rem;
+			transform: rotate(0deg);
+			transition: transform 0.5s ease-out;
+		}
+		.hamburger-icon.open {
+			transform: rotate(-90deg);
+		}
+	}
+</style>
