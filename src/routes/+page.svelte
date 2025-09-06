@@ -12,8 +12,6 @@
 		<strong>Application & Architecture</strong>
 	</p>
 </main>
-<section>
-</section>
 
 <style>
 	main {

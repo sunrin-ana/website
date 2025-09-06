@@ -1,6 +1,7 @@
 <script>
 	import Fa from 'svelte-fa';
 	import { faFacebook, faInstagram, faGithub } from '@fortawesome/free-brands-svg-icons';
+	import { goto } from '$app/navigation';
 
 	let isOpen = false;
 
@@ -36,7 +37,7 @@
 <svelte:window on:resize={handleResize} />
 
 <div class="navbar-container">
-	<img class="logo-image" src="/logo.svg" alt="logo" on:click={() => scroll('landing')} />
+	<img class="logo-image" src="/logo.svg" alt="logo" on:click={() => goto('/')} />
 
 	<div class="hamburger-icon" on:click={toggleMenu} class:open={isOpen}>
 		<svg xmlns="http://www.w3.org/2000/svg" width="20" height="16" viewBox="0 0 20 16" fill="none">
@@ -51,7 +52,7 @@
 			{#each screens as screen, i}
 				<div
 					class="navbar-menu-item"
-					on:click={() => scroll(screen.toLowerCase())}
+					on:click={() => {if (screen === 'Curriculum') alert("페이지는 현재 작업 중에 있습니다."); else goto("/"+screen.toLowerCase())}}
 					style="--delay-index: {i}"
 				>
 					{screen}
