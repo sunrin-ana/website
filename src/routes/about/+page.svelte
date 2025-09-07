@@ -1,6 +1,6 @@
 <script lang="ts">
 	import Nav from "$lib/Nav.svelte";
-	import { onDestroy, onMount } from "svelte";
+	import { onMount } from "svelte";
     import { onNavigate } from "$app/navigation";
     import { waapi, stagger, onScroll, createTimeline, utils } from 'animejs';
 	import ArrowConnect from "$lib/ArrowConnect.svelte";
@@ -42,7 +42,7 @@
 <Nav></Nav>
 <main>
     <section>
-        <h1>We're connecting to the world</h1>
+        <h1>We're connecting the world</h1>
         <div style="display: flex; flex-flow:column; justify-content: center; align-items: center;">
             <div id=world>
 <pre>                       .-/+oooossosso+/:.</pre>
@@ -81,7 +81,7 @@
         </pre>
         <div id="description">
             <p>안녕하세요! 👋</p>
-            <p>저희는 2011년부터 <strong>선린인터넷고등학교 소프트웨어과의 전공 동아리</strong>로 활동한 AnA입니다.</p>
+            <p>저희는 2011년부터 선린인터넷고등학교 소프트웨어과의 전공 동아리로 활동한 AnA입니다.</p>
             <p>10년이 넘는 시간 동안 AnA는 지속적인 도전과 전진으로 새로운 미래와 혁신을 이끌어 가고 있습니다.</p>
             <br/>
             <p>처음 Algorithm & Application이라는 알고리즘 동아리로 시작하여, </p>
@@ -94,7 +94,7 @@
             <p>그리고 이제, </p>
             <p>2025년에는 네트워크와 AI 기술까지 다루며 새로운 역사를 써 내려갈 준비를 하고 있습니다.</p>
             <br/>
-            <p><strong>AnA - 우리의 도전은 멈추지 않습니다.</strong></p>
+            <p>AnA - 우리의 도전은 멈추지 않습니다.</p>
         </div>
         </div>
     </section>
@@ -109,6 +109,10 @@
     main * {
         font-family: "JetBrains Mono", monospace;
         font-optical-sizing: auto;
+    }
+
+    #description p {
+        font-family: 'RoundedFixedsys';
     }
 
     #world pre {
