@@ -1,6 +1,7 @@
 <script>
 	import Halftone from "$lib/Halftone.svelte";
 	import Nav from "$lib/Nav.svelte";
+	import { goto } from '$app/navigation';
 </script>
 
 <Nav></Nav>
@@ -8,7 +9,10 @@
 <main>
     <Halftone />
 	<p id=hero>
-		새로운 도약과 함께 성장하는 <strong class="cp">AnA</strong><br/>
+		새로운 도약과 함께 성장하는 <strong
+		class="cp"
+		on:click={() => {goto("/anafetch")}}
+	>AnA</strong><br/>
 		<strong>Application & Architecture</strong>
 	</p>
 </main>
