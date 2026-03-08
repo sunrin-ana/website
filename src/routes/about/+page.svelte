@@ -2,96 +2,39 @@
 	import Nav from "$lib/Nav.svelte";
 	import { onDestroy, onMount, tick } from "svelte";
 	import { onNavigate } from "$app/navigation";
-	import { waapi, stagger, onScroll, createTimeline, utils } from "animejs";
+	import { waapi, stagger, createTimeline, utils } from "animejs";
 	import ArrowConnect from "$lib/ArrowConnect.svelte";
+	import earthLandMask from "$lib/earth-land-mask.json";
 
-	const WORLD_COLS = 78;
-	const WORLD_ROWS = 38;
-	const WORLD_RADIUS = 17.6;
-	const X_ASPECT = 0.5;
+	const WORLD_COLS = 74;
+	const WORLD_ROWS = 36;
+	const WORLD_RADIUS = 16.8;
+	const X_ASPECT = 0.54;
 	const RAD_TO_DEG = 180 / Math.PI;
 
-	type GeoPolygon = Array<[number, number]>;
-	type LandmarkSite = { lonDeg: number; latDeg: number; size: number };
-	type LandmarkRender = { left: number; top: number; scale: number; opacity: number };
+	const LAND_MASK_WIDTH = earthLandMask.width;
+	const LAND_MASK_HEIGHT = earthLandMask.height;
 
-	const LAND_POLYGONS: GeoPolygon[] = [
-		[
-			[-168, 72], [-140, 73], [-126, 66], [-111, 57], [-99, 49], [-92, 49], [-83, 26], [-98, 14],
-			[-106, 18], [-114, 24], [-121, 31], [-128, 41], [-137, 49], [-151, 58], [-165, 62]
-		],
-		[
-			[-81, 12], [-74, 10], [-67, 5], [-62, -3], [-58, -12], [-55, -22], [-52, -33], [-55, -45],
-			[-63, -54], [-72, -53], [-78, -40], [-75, -20], [-79, -5]
-		],
-		[
-			[-74, 83], [-40, 83], [-26, 73], [-35, 60], [-50, 58], [-62, 66]
-		],
-		[
-			[-11, 36], [-6, 43], [2, 45], [12, 46], [22, 52], [30, 60], [40, 63], [42, 55], [34, 46],
-			[25, 42], [16, 38], [8, 36], [2, 35]
-		],
-		[
-			[-18, 37], [-8, 36], [2, 37], [14, 35], [25, 32], [33, 24], [35, 15], [43, 12], [51, 11],
-			[48, 4], [44, -10], [36, -21], [28, -30], [17, -35], [7, -35], [-3, -28], [-10, -15],
-			[-15, 1], [-17, 18]
-		],
-		[
-			[37, 31], [50, 29], [57, 22], [56, 16], [48, 12], [43, 16], [40, 24]
-		],
-		[
-			[26, 8], [40, 8], [51, 16], [61, 22], [70, 30], [82, 34], [92, 44], [108, 54], [130, 55],
-			[147, 48], [152, 37], [141, 29], [121, 24], [108, 16], [96, 10], [86, 8], [75, 12],
-			[64, 16], [52, 10], [40, 4], [30, 0]
-		],
-		[
-			[67, 24], [77, 29], [88, 24], [84, 10], [76, 8], [70, 14]
-		],
-		[
-			[95, 8], [108, 7], [115, 0], [112, -5], [104, -6], [97, -1]
-		],
-		[
-			[129, 31], [142, 45], [147, 38], [139, 32]
-		],
-		[
-			[112, -11], [154, -11], [153, -39], [131, -43], [114, -34]
-		],
-		[
-			[44, -13], [51, -16], [50, -25], [45, -26]
-		]
-	];
+	function decodeMaskBits(base64: string) {
+		const raw = atob(base64);
+		const bytes = new Uint8Array(raw.length);
+		for (let i = 0; i < raw.length; i++) {
+			bytes[i] = raw.charCodeAt(i);
+		}
+		return bytes;
+	}
 
-	const LAND_SAMPLE_KERNEL: Array<[number, number, number]> = [
-		[0, 0, 0.52],
-		[1.2, 0, 0.11],
-		[-1.2, 0, 0.11],
-		[0, 1.2, 0.1],
-		[0, -1.2, 0.1],
-		[2.4, 0, 0.03],
-		[-2.4, 0, 0.03]
-	];
-
-	const LANDMARK_SITES: LandmarkSite[] = [
-		{ lonDeg: -100, latDeg: 40, size: 0.86 }, // North America
-		{ lonDeg: -60, latDeg: -15, size: 0.84 }, // South America
-		{ lonDeg: 12, latDeg: 50, size: 0.82 },   // Europe
-		{ lonDeg: 20, latDeg: 6, size: 0.88 },    // Africa
-		{ lonDeg: 105, latDeg: 34, size: 0.84 },  // Asia
-		{ lonDeg: 134, latDeg: -25, size: 0.86 }, // Oceania (Australia)
-		{ lonDeg: 30, latDeg: -76, size: 0.8 }    // Antarctica
-	];
+	const LAND_MASK_BITS = decodeMaskBits(earthLandMask.data);
 
 	let showContent = false;
 	let allowReveal = true;
-	let worldPhase = 0.33;
+	let worldPhase = 0.33 + Math.PI;
 	let worldRows: string[] = buildWorldRows(worldPhase);
-	let landmarks: LandmarkRender[] = projectLandmarks(worldPhase);
 	let worldSpinInterval: ReturnType<typeof setInterval> | undefined;
-	let firstDotActive = false;
-	let secondDotActive = false;
-	let firstDotHold = 0;
-	let secondDotHold = 0;
-	const DOT_HOLD_STEPS = 3;
+	let descriptionProgressHandler: (() => void) | undefined;
+	let descriptionLines: HTMLElement[] = [];
+	let nextDescriptionLine = 0;
+	let unlockDescriptionReveal: (() => void) | undefined;
 
 	function clamp(value: number, min: number, max: number) {
 		return Math.max(min, Math.min(max, value));
@@ -113,45 +56,45 @@
 		return t * t * (3 - (2 * t));
 	}
 
-	function degToRad(deg: number) {
-		return deg / RAD_TO_DEG;
-	}
-
 	function wrapDeltaDeg(a: number, b: number) {
 		let delta = Math.abs(a - b) % 360;
 		if (delta > 180) delta = 360 - delta;
 		return delta;
 	}
 
-	function pointInPolygon(lonDeg: number, latDeg: number, polygon: GeoPolygon) {
-		let inside = false;
-		for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
-			const [xi, yi] = polygon[i];
-			const [xj, yj] = polygon[j];
-			const intersects = ((yi > latDeg) !== (yj > latDeg)) &&
-				(lonDeg < (((xj - xi) * (latDeg - yi)) / ((yj - yi) || 1e-9)) + xi);
-			if (intersects) inside = !inside;
-		}
-		return inside;
+	function readLandBit(x: number, y: number) {
+		const wrappedX = ((x % LAND_MASK_WIDTH) + LAND_MASK_WIDTH) % LAND_MASK_WIDTH;
+		const clampedY = clamp(y, 0, LAND_MASK_HEIGHT - 1);
+		const bitIndex = (clampedY * LAND_MASK_WIDTH) + wrappedX;
+		return (LAND_MASK_BITS[bitIndex >> 3] >> (bitIndex & 7)) & 1;
 	}
 
-	function isLand(lonDeg: number, latDeg: number) {
-		if (latDeg < -71.5) return true;
+	function sampleLandMask(lonDeg: number, latDeg: number) {
 		const lon = normalizeLonDeg(lonDeg);
-		for (const polygon of LAND_POLYGONS) {
-			if (pointInPolygon(lon, latDeg, polygon)) return true;
-		}
-		return false;
+		const u = ((lon + 180) / 360) * (LAND_MASK_WIDTH - 1);
+		const v = ((90 - latDeg) / 180) * (LAND_MASK_HEIGHT - 1);
+
+		const x0 = Math.floor(u);
+		const y0 = Math.floor(v);
+		const x1 = (x0 + 1) % LAND_MASK_WIDTH;
+		const y1 = Math.min(LAND_MASK_HEIGHT - 1, y0 + 1);
+		const tx = u - x0;
+		const ty = v - y0;
+
+		const a = readLandBit(x0, y0);
+		const b = readLandBit(x1, y0);
+		const c = readLandBit(x0, y1);
+		const d = readLandBit(x1, y1);
+
+		const top = a + ((b - a) * tx);
+		const bottom = c + ((d - c) * tx);
+		return top + ((bottom - top) * ty);
 	}
 
 	function sampleLand(lon: number, lat: number) {
 		const lonDeg = lon * RAD_TO_DEG;
 		const latDeg = lat * RAD_TO_DEG;
-		let sum = 0;
-		for (const [dx, dy, weight] of LAND_SAMPLE_KERNEL) {
-			if (isLand(lonDeg + dx, latDeg + dy)) sum += weight;
-		}
-		return clamp(sum, 0, 1);
+		return sampleLandMask(lonDeg, latDeg);
 	}
 
 	function sampleRelief(lon: number, lat: number) {
@@ -183,6 +126,9 @@
 		value += gaussian2D(lonDeg, latDeg, 15, 23, 30, 14) * 0.9; // Sahara west/center
 		value += gaussian2D(lonDeg, latDeg, 28, 18, 16, 10) * 0.6; // Sahara east
 		value += gaussian2D(lonDeg, latDeg, 45, 24, 20, 10) * 0.6; // Arabian desert
+		value += gaussian2D(lonDeg, latDeg, 100, 42, 24, 10) * 0.52; // Gobi
+		value += gaussian2D(lonDeg, latDeg, 134, -25, 18, 11) * 0.48; // Australian interior
+		value += gaussian2D(lonDeg, latDeg, -70, -23, 14, 8) * 0.35; // Atacama
 
 		return clamp(value, 0, 1);
 	}
@@ -193,7 +139,23 @@
 		let value = 0;
 
 		value += gaussian2D(lonDeg, latDeg, 20, 0, 28, 14) * 0.45; // Equatorial Africa
+		value += gaussian2D(lonDeg, latDeg, -62, -5, 24, 12) * 0.45; // Amazon basin
+		value += gaussian2D(lonDeg, latDeg, 105, 8, 28, 12) * 0.4; // Southeast Asia
 		value += gaussian2D(lonDeg, latDeg, 12, 48, 22, 10) * 0.3; // Europe belt
+
+		return clamp(value, 0, 1);
+	}
+
+	function sampleMountains(lon: number, lat: number) {
+		const lonDeg = lon * RAD_TO_DEG;
+		const latDeg = lat * RAD_TO_DEG;
+		let value = 0;
+
+		value += gaussian2D(lonDeg, latDeg, -112, 44, 14, 8) * 0.42; // Rockies
+		value += gaussian2D(lonDeg, latDeg, -72, -22, 10, 18) * 0.56; // Andes
+		value += gaussian2D(lonDeg, latDeg, 10, 46, 8, 5) * 0.34; // Alps
+		value += gaussian2D(lonDeg, latDeg, 85, 30, 18, 8) * 0.68; // Himalayas / Tibetan Plateau
+		value += gaussian2D(lonDeg, latDeg, 38, -4, 10, 10) * 0.22; // East African Highlands
 
 		return clamp(value, 0, 1);
 	}
@@ -205,7 +167,7 @@
 
 		for (let y = 0; y < WORLD_ROWS; y++) {
 			const sy = y - cy;
-			const ny = sy / WORLD_RADIUS;
+			const ny = -sy / WORLD_RADIUS;
 			let line = "";
 
 			for (let x = 0; x < WORLD_COLS; x++) {
@@ -213,12 +175,12 @@
 				const nx = sx / WORLD_RADIUS;
 				const dist2 = (nx * nx) + (ny * ny);
 
-				if (dist2 > 1.03) {
+				if (dist2 > 1.018) {
 					line += " ";
 					continue;
 				}
 
-				if (dist2 > 0.968) {
+				if (dist2 > 0.958) {
 					line += ".";
 					continue;
 				}
@@ -230,31 +192,28 @@
 				const relief = sampleRelief(lon, lat);
 				const desert = sampleDesert(lon, lat);
 				const vegetation = sampleVegetation(lon, lat);
-
-				let light = clamp(0.08 + (nz * 0.95) + (nx * 0.4) + (ny * 0.1), 0, 1);
-				const rim = clamp((0.996 - dist2) / 0.3, 0, 1);
-				light *= 0.62 + (rim * 0.44);
+				const mountains = sampleMountains(lon, lat);
 
 				let pixel = "";
-				const polar = clamp((Math.abs(lat) - 1.17) / 0.3, 0, 1);
-				const coast = smoothstep(0.44, 0.6, land) * (1 - smoothstep(0.64, 0.8, land));
-				const landCore = smoothstep(0.66, 0.86, land);
+				const polar = clamp((Math.abs(lat) - 1.14) / 0.28, 0, 1);
+				const coast = smoothstep(0.42, 0.58, land) * (1 - smoothstep(0.58, 0.74, land));
+				const landCore = smoothstep(0.58, 0.76, land);
+				const terrainTone = clamp(
+					0.48 + (relief * 0.14) + (mountains * 0.28) + (desert * 0.2) - (vegetation * 0.1),
+					0,
+					1
+				);
+				const coastTone = clamp(0.52 + (relief * 0.08) + (desert * 0.04) - (vegetation * 0.03), 0, 1);
+				const oceanTone = clamp(0.46 + (relief * 0.1), 0, 1);
 
-				if (polar > 0.44) {
-					pixel = pickRamp(" .:*#", (light * 0.8) + (polar * 0.36));
+				if (polar > 0.46) {
+					pixel = pickRamp(" .,:;*#", clamp(0.4 + (polar * 0.5), 0, 1));
 				} else if (landCore > 0.02) {
-					const terrain = clamp(
-						(light * 0.72) + (relief * 0.14) + (desert * 0.24) - (vegetation * 0.1),
-						0,
-						1
-					);
-					pixel = pickRamp(".,:;=+*#%@", terrain);
+					pixel = pickRamp(" .,:;irsXA253hMHGS#9B&@", terrainTone);
 				} else if (coast > 0.03) {
-					const coastShade = clamp((light * 0.67) + (coast * 0.32), 0, 1);
-					pixel = pickRamp(".,:;-", coastShade);
+					pixel = pickRamp(" .,:-=", coastTone);
 				} else {
-					const oceanShade = clamp((light * 0.56) + (relief * 0.03), 0, 1);
-					pixel = pickRamp("`'.,-~", oceanShade);
+					pixel = pickRamp(" `'.,-~:^=+*", oceanTone);
 				}
 
 				line += pixel;
@@ -266,53 +225,90 @@
 		return rows;
 	}
 
-	function projectLandmarks(phase: number) {
-		const cx = (WORLD_COLS - 1) / 2;
-		const cy = (WORLD_ROWS - 1) / 2;
-		const projected: Array<LandmarkRender & { depth: number }> = [];
-
-		for (const site of LANDMARK_SITES) {
-			const lon = degToRad(site.lonDeg);
-			const lat = degToRad(site.latDeg);
-			const theta = lon - phase;
-			const cosLat = Math.cos(lat);
-			const nx = Math.sin(theta) * cosLat;
-			const ny = Math.sin(lat);
-			const nz = Math.cos(theta) * cosLat;
-
-			if (nz <= 0.06) continue;
-
-			const xChar = cx + ((nx * WORLD_RADIUS) / X_ASPECT);
-			const yChar = cy + (ny * WORLD_RADIUS);
-			const left = ((xChar + 0.5) / WORLD_COLS) * 100;
-			const top = ((yChar + 0.5) / WORLD_ROWS) * 100;
-
-			const depth = clamp((nz - 0.06) / 0.94, 0, 1);
-			projected.push({
-				left,
-				top,
-				scale: (0.86 + (depth * 0.54)) * site.size,
-				opacity: 0.72 + (depth * 0.28),
-				depth
-			});
-		}
-
-		projected.sort((a, b) => a.depth - b.depth);
-		return projected;
-	}
-
 	function startWorldSpin() {
 		worldRows = buildWorldRows(worldPhase);
-		landmarks = projectLandmarks(worldPhase);
 		worldSpinInterval = setInterval(() => {
 			worldPhase += 0.044;
 			worldRows = buildWorldRows(worldPhase);
-			landmarks = projectLandmarks(worldPhase);
 		}, 115);
 	}
 
 	function stopWorldSpin() {
 		clearInterval(worldSpinInterval);
+	}
+
+	function stopDescriptionReveal() {
+		if (descriptionProgressHandler) {
+			window.removeEventListener("scroll", descriptionProgressHandler);
+			descriptionProgressHandler = undefined;
+		}
+
+		if (unlockDescriptionReveal) {
+			window.removeEventListener("scroll", unlockDescriptionReveal);
+			unlockDescriptionReveal = undefined;
+		}
+	}
+
+	function revealDescriptionByScroll() {
+		if (!descriptionLines.length) return;
+
+		const triggerY = window.innerHeight * 0.78;
+		while (nextDescriptionLine < descriptionLines.length) {
+			const line = descriptionLines[nextDescriptionLine];
+			if (line.getBoundingClientRect().top > triggerY) break;
+			line.classList.add("is-visible");
+			nextDescriptionLine += 1;
+		}
+
+		const nearBottom = (window.innerHeight + window.scrollY) >= (document.documentElement.scrollHeight - 4);
+		if (nearBottom) {
+			while (nextDescriptionLine < descriptionLines.length) {
+				descriptionLines[nextDescriptionLine].classList.add("is-visible");
+				nextDescriptionLine += 1;
+			}
+		}
+
+		if (nextDescriptionLine >= descriptionLines.length && descriptionProgressHandler) {
+			window.removeEventListener("scroll", descriptionProgressHandler);
+			descriptionProgressHandler = undefined;
+		}
+	}
+
+	function startDescriptionReveal() {
+		if (descriptionProgressHandler) return;
+		descriptionProgressHandler = () => {
+			revealDescriptionByScroll();
+		};
+		window.addEventListener("scroll", descriptionProgressHandler, { passive: true });
+		revealDescriptionByScroll();
+	}
+
+	function initDescriptionReveal() {
+		stopDescriptionReveal();
+		descriptionLines = Array.from(document.querySelectorAll<HTMLElement>("#description p:not(:first-of-type)"));
+		nextDescriptionLine = 0;
+
+		for (const line of descriptionLines) {
+			line.classList.remove("is-visible");
+		}
+
+		if (!descriptionLines.length) return;
+
+		if (window.scrollY > 12) {
+			startDescriptionReveal();
+			return;
+		}
+
+		unlockDescriptionReveal = () => {
+			if (window.scrollY <= 12) return;
+			if (unlockDescriptionReveal) {
+				window.removeEventListener("scroll", unlockDescriptionReveal);
+				unlockDescriptionReveal = undefined;
+			}
+			startDescriptionReveal();
+		};
+
+		window.addEventListener("scroll", unlockDescriptionReveal, { passive: true });
 	}
 
 	function runContentAnimation() {
@@ -338,15 +334,7 @@
 			.sync(world, 0)
 			.sync(linkReveal, 0)
 			.call(() => {
-				waapi.animate("#description p", {
-					opacity: { from: 0, to: 1, duration: 1, delay: stagger(150) },
-					delay: 1000,
-					autoplay: onScroll({
-						sync: 1,
-						enter: "max bottom",
-						leave: "min bottom"
-					})
-				});
+				initDescriptionReveal();
 			});
 	}
 
@@ -376,6 +364,7 @@
 	onNavigate(() => {
 		allowReveal = false;
 		stopWorldSpin();
+		stopDescriptionReveal();
 		utils.remove("#intro-title");
 		utils.remove("#description p");
 		utils.remove("#world");
@@ -385,6 +374,7 @@
 	onDestroy(() => {
 		allowReveal = false;
 		stopWorldSpin();
+		stopDescriptionReveal();
 	});
 </script>
 
@@ -403,15 +393,6 @@
 					{#each worldRows as row}
 						<pre>{row}</pre>
 					{/each}
-					<div class="landmark-layer">
-						{#each landmarks as landmark}
-							<span
-								class="ana-landmark"
-								style={`left:${landmark.left}%;top:${landmark.top}%;--landmark-scale:${landmark.scale};--landmark-opacity:${landmark.opacity};`}
-							>
-							</span>
-						{/each}
-					</div>
 				</div>
 
 				<pre id="link">
@@ -442,8 +423,14 @@
 
 <style>
 	main {
-		margin-top: 5rem;
-		margin: 5rem 3rem 0 3rem;
+		margin: 5rem auto 0;
+		padding: 0 3rem clamp(9rem, 22vh, 14rem);
+		max-width: 1200px;
+		box-sizing: border-box;
+	}
+
+	section {
+		width: 100%;
 	}
 
 	main * {
@@ -473,9 +460,32 @@
 
 	#description p {
 		font-family: "RoundedFixedsys";
+		width: min(100%, 72ch);
+		margin: 0 auto;
+		text-align: left;
+		opacity: 0;
+		visibility: hidden;
+		transform: translateY(14px);
+		transition: opacity 320ms ease, transform 320ms ease;
+	}
+
+	#description p:first-of-type,
+	:global(#description p.is-visible) {
+		opacity: 1;
+		visibility: visible;
+		transform: translateY(0);
+	}
+
+	#description {
+		width: 100%;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		margin-top: clamp(1rem, 3vw, 1.5rem);
 	}
 
 	#world-stage {
+		width: 100%;
 		display: flex;
 		flex-flow: column;
 		justify-content: center;
@@ -494,45 +504,65 @@
 
 	#world pre {
 		margin: 0;
-		font-size: 0.73rem;
-		line-height: 0.84rem;
-		letter-spacing: 0.02rem;
-		opacity: 0;
-	}
-
-	#world .landmark-layer {
-		position: absolute;
-		inset: 0;
-		pointer-events: none;
-		z-index: 4;
-	}
-
-	#world .ana-landmark {
-		position: absolute;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		width: 0.75rem;
-		height: 0.75rem;
-		transform: translate(-50%, -50%) scale(var(--landmark-scale, 1));
-		opacity: var(--landmark-opacity, 1);
-	}
-
-	#world .ana-landmark img {
-		width: 100%;
-		height: 100%;
-		object-fit: contain;
-		user-select: none;
-		filter: drop-shadow(0 0 0.14rem rgba(0, 0, 0, 0.75));
-	}
-
-	#description p {
+		font-size: clamp(0.43rem, 1.2vw, 0.67rem);
+		line-height: clamp(0.5rem, 1.35vw, 0.76rem);
+		letter-spacing: clamp(0rem, 0.02vw, 0.015rem);
 		opacity: 0;
 	}
 
 	#link {
 		opacity: 0;
 		color: #111;
+		max-width: 100%;
+		text-align: center;
+		white-space: pre-wrap;
+		overflow-wrap: anywhere;
+		font-size: clamp(0.5rem, 1.05vw, 0.95rem);
+		line-height: 1.35;
+	}
+
+	@media (min-width: 1024px) {
+		#description {
+			margin-top: clamp(5rem, 16vh, 10rem);
+		}
+	}
+
+	@media (max-width: 768px) {
+		main {
+			margin-top: 4.5rem;
+			padding: 0 1rem clamp(12rem, 26vh, 17rem);
+		}
+
+		#intro-title {
+			font-size: clamp(2rem, 11vw, 3.2rem);
+			letter-spacing: 0.04em;
+		}
+
+		#description {
+			width: 100%;
+		}
+
+		#description p {
+			font-size: 0.88rem;
+			line-height: 1.5;
+		}
+	}
+
+	@media (max-width: 430px) {
+		main {
+			margin-top: 4.25rem;
+			padding: 0 0.5rem clamp(13rem, 30vh, 19rem);
+		}
+
+		#link {
+			font-size: 0.5rem;
+			line-height: 1.25;
+		}
+
+		#description p {
+			font-size: 0.8rem;
+			line-height: 1.42;
+		}
 	}
 
 </style>

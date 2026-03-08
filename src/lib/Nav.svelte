@@ -1,25 +1,19 @@
-<script>
+<script lang="ts">
 	import Fa from 'svelte-fa';
 	import { faFacebook, faInstagram, faGithub } from '@fortawesome/free-brands-svg-icons';
 	import { goto } from '$app/navigation';
 
 	let isOpen = false;
 
-	const screens = ['About', 'Curriculum'];
-	const pages = ['AnAlog', 'Solve', 'Join'];
+	const screens = ['About', 'Curriculum'] as const;
+	const pages = ['AnAlog', 'Solve', 'Join'] as const;
+	type PageName = (typeof pages)[number];
 
 	const toggleMenu = () => {
 		isOpen = !isOpen;
 	};
 
-	const scroll = (id) => {
-		const element = document.getElementById(id);
-		if (!element) return;
-		const yCoordinate = element.getBoundingClientRect().top + window.scrollY;
-		window.scrollTo({ top: yCoordinate, behavior: 'smooth' });
-	};
-
-	const needToWorkOn = (page) => {
+	const needToWorkOn = (page: PageName) => {
 		if (page === 'Join') {
 			const now = new Date();
 			const start = new Date('2026-03-09T00:00:00.000Z');
@@ -35,7 +29,7 @@
 				alert('지원이 마감되었습니다.')
 				return
 			}
-			window.location = "https://apply.ana.st/"
+			window.location.href = "https://apply.ana.st/"
 			return;
 		}
 		alert(`${page} 페이지는 현재 작업 중에 있습니다! 조금만 기다려주세요!`);
@@ -51,57 +45,74 @@
 <svelte:window on:resize={handleResize} />
 
 <div class="navbar-container">
-	<img class="logo-image" src="/logo.svg" alt="logo" on:click={() => goto('/')} />
+	<button class="logo-button" on:click={() => goto('/')} aria-label="Go to home">
+		<img class="logo-image" src="/logo.svg" alt="logo" />
+	</button>
 
-	<div class="hamburger-icon" on:click={toggleMenu} class:open={isOpen}>
+	<button
+		class="hamburger-icon"
+		on:click={toggleMenu}
+		class:open={isOpen}
+		type="button"
+		aria-label="Toggle menu"
+		aria-expanded={isOpen}
+	>
 		<svg xmlns="http://www.w3.org/2000/svg" width="20" height="16" viewBox="0 0 20 16" fill="none">
 			<path d="M2 2L18 2" stroke="black" stroke-width="3" stroke-linecap="round" />
 			<path d="M2 8L18 8" stroke="black" stroke-width="3" stroke-linecap="round" />
 			<path d="M2 14H18" stroke="black" stroke-width="3" stroke-linecap="round" />
 		</svg>
-	</div>
+	</button>
 
 	<div class="navbar-menu" class:open={isOpen}>
 		<div class="navbar-menu-items">
 			{#each screens as screen, i}
-				<div
+				<button
 					class="navbar-menu-item"
 					on:click={() => {goto("/"+screen.toLowerCase())}}
 					style="--delay-index: {i}"
+					type="button"
 				>
 					{screen}
-				</div>
+				</button>
 			{/each}
 			{#each pages as page, i}
-				<div
+				<button
 					class="navbar-menu-item"
 					on:click={() => needToWorkOn(page)}
 					style="--delay-index: {i + screens.length}"
+					type="button"
 				>
 					{page}↗
-				</div>
+				</button>
 			{/each}
 		</div>
 
 		<div class="navbar-icons">
-			<div
+			<button
 				class="navbar-icon"
 				on:click={() => window.open('https://www.facebook.com/sunrinana/', '_blank')}
+				type="button"
+				aria-label="Facebook"
 			>
 				<Fa icon={faFacebook} color="black" />
-			</div>
-			<div
+			</button>
+			<button
 				class="navbar-icon"
 				on:click={() => window.open('https://instagram.com/sunrin_ana', '_blank')}
+				type="button"
+				aria-label="Instagram"
 			>
 				<Fa icon={faInstagram} color="black" />
-			</div>
-			<div
+			</button>
+			<button
 				class="navbar-icon"
 				on:click={() => window.open('https://github.com/sunrin-ana', '_blank')}
+				type="button"
+				aria-label="Github"
 			>
 				<Fa icon={faGithub} color="black" />
-			</div>
+			</button>
 		</div>
 	</div>
 </div>
@@ -136,10 +147,18 @@
 	.logo-image {
 		width: 2rem;
 		height: 2rem;
-		cursor: pointer;
 		transition: transform 0.25s ease-out;
 	}
-	.logo-image:hover {
+	.logo-button {
+		border: 0;
+		background: transparent;
+		padding: 0;
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+	.logo-button:hover .logo-image {
 		transform: scale(1.2);
 		transition: transform 0.25s ease-out;
 	}
@@ -165,6 +184,10 @@
 		color: rgb(109, 109, 109);
 		user-select: none;
 		height: fit-content;
+		border: 0;
+		background: transparent;
+		padding: 0;
+		font: inherit;
 	}
 	.navbar-menu-item:hover {
 		color: black;
@@ -198,6 +221,12 @@
 		cursor: pointer;
 		font-size: 1.5rem;
 		transition: transform 0.25s ease-out;
+		border: 0;
+		background: transparent;
+		padding: 0;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
 	}
 	.navbar-icon:hover {
 		transform: scale(1.2);
@@ -208,6 +237,9 @@
 		display: none;
 		cursor: pointer;
 		user-select: none;
+		border: 0;
+		background: transparent;
+		padding: 0;
 	}
 
 	/* Responsive Mobile Styles */

@@ -1,11 +1,16 @@
-<script lang=js>
+<script lang="ts">
+	// @ts-nocheck
 	import { onMount } from 'svelte';
 	import * as THREE from 'three';
-    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+	import { GLTFLoader, type GLTF } from 'three/addons/loaders/GLTFLoader.js';
 
-	let canvas;
-	let animationFrameId;
-	let renderer, scene, camera, size, mod = 0.5;
+	let canvas: HTMLCanvasElement | undefined;
+	let animationFrameId = 0;
+	let renderer: THREE.WebGLRenderer | undefined;
+	let scene: THREE.Scene | undefined;
+	let camera: THREE.PerspectiveCamera | undefined;
+	let size = 0;
+	let mod = 0.5;
 
 	// 나는 싫어요 이거
 	const vertexShader = `
@@ -67,67 +72,75 @@
 		renderer.setSize(window.innerWidth*.6, window.innerHeight*.6);
 		renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
 		renderer.setClearColor(0xf9f9f9,1);
-        
+
+		const uniforms: {
+			uColor: THREE.IUniform<THREE.Color>;
+			uLightPosition: THREE.IUniform<THREE.Vector3>;
+			uSpacing: THREE.IUniform<number>;
+			uDotSize: THREE.IUniform<number>;
+			uFadeStart: THREE.IUniform<number>;
+			uFadeEnd: THREE.IUniform<number>;
+			uResolution: THREE.IUniform<THREE.Vector2>;
+		} = {
+			uColor: { value: new THREE.Color(0x334882) },
+			uLightPosition: { value: new THREE.Vector3(-5, -.2, 3) },
+			uSpacing: { value: 100.0 },
+			uDotSize: { value: .65 },
+			uFadeStart: { value: -5.0 },
+			uFadeEnd: { value: 1.0 },
+			uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }
+		};
+
 		const shaderMaterial = new THREE.ShaderMaterial({
-			uniforms: {
-				uColor: { value: new THREE.Color(0x334882) },
-				uLightPosition: { value: new THREE.Vector3(-5, -.2, 3) },
-				uSpacing: { value: 100.0 },
-				uDotSize: { value: .65 },
-				uFadeStart: { value: -5.0 },
-				uFadeEnd: { value: 1.0 },
-				uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }
-			},
+			uniforms,
 			vertexShader,
 			fragmentShader,
 			transparent: true,
-            widthDepth: true
+			depthWrite: true
 		});
 
         const loader = new GLTFLoader();
 
+		loader.load('./ana.gltf', (obj: GLTF) => {
+			const model = obj.scene.children[0] as THREE.Mesh;
+			model.material = shaderMaterial;
+			model.scale.setScalar(2);
+			model.scale.z = model.scale.z * .3;
 
-        loader.load('./ana.gltf', (obj) => {
-            const model = obj.scene.children[0];
-            
-            model.material = shaderMaterial;
-            model.scale.setScalar(2);
-            model.scale.z = model.scale.z * .3
-
-            scene.add(model);
-        });
+			scene?.add(model);
+		});
 
 		// 특검
 		const handleResize = () => {
-            if(window.innerWidth > 600) mod = .5;
-            else mod = .8;
+			if (!camera || !renderer) return;
+			if(window.innerWidth > 600) mod = .5;
+			else mod = .8;
 
-            size = Math.min(window.innerWidth, window.innerHeight)*mod;
-
+			size = Math.min(window.innerWidth, window.innerHeight)*mod;
 			camera.aspect = 1;
-            camera.updateProjectionMatrix();
-
-            camera.position.set(0,0,4);
+			camera.updateProjectionMatrix();
+			camera.position.set(0,0,4);
 
 			renderer.setSize(size, size);
 			renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-			shaderMaterial.uniforms.uResolution.value.set(size, size);
+			uniforms.uResolution.value.set(size, size);
 		};
 		window.addEventListener('resize', handleResize);
 
         handleResize();
 
         // 마우스 특검
-        const handleMouseMove = (e) => {
-            let x = (e.pageX-(window.innerWidth/2))*.005;
-            let y = ((window.innerHeight/2)-e.pageY)*.005;
-            shaderMaterial.uniforms.uLightPosition.value.x = x;
-            shaderMaterial.uniforms.uLightPosition.value.y = y;
-        }
-        window.addEventListener('mousemove', handleMouseMove);
+		const handleMouseMove = (e: MouseEvent) => {
+			const x = (e.pageX-(window.innerWidth/2))*.005;
+			const y = ((window.innerHeight/2)-e.pageY)*.005;
+			uniforms.uLightPosition.value.x = x;
+			uniforms.uLightPosition.value.y = y;
+		};
+		window.addEventListener('mousemove', handleMouseMove);
 
 		const animate = () => {
 			animationFrameId = requestAnimationFrame(animate);
+			if (!renderer || !scene || !camera) return;
 			renderer.render(scene, camera);
 		};
 		animate();
@@ -135,14 +148,12 @@
 		// 갈아 엎어 그냥
 		return () => {
 			window.removeEventListener('resize', handleResize);
-            window.removeEventListener('mousemove', handleMouseMove);
+			window.removeEventListener('mousemove', handleMouseMove);
 			cancelAnimationFrame(animationFrameId);
 			if (renderer) {
 				renderer.dispose();
 			}
-			if(shaderMaterial) {
-				shaderMaterial.dispose();
-			}
+			shaderMaterial.dispose();
 		};
 	});
 </script>
