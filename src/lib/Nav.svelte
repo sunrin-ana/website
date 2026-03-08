@@ -52,7 +52,7 @@
 			{#each screens as screen, i}
 				<div
 					class="navbar-menu-item"
-					on:click={() => {if (screen === 'Curriculum') alert("페이지는 현재 작업 중에 있습니다."); else goto("/"+screen.toLowerCase())}}
+					on:click={() => {goto("/"+screen.toLowerCase())}}
 					style="--delay-index: {i}"
 				>
 					{screen}
