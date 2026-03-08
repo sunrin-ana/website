@@ -21,7 +21,21 @@
 
 	const needToWorkOn = (page) => {
 		if (page === 'Join') {
-			alert('지금은 지원 기간이 아닙니다!');
+			const now = new Date();
+			const start = new Date('2026-03-09T00:00:00.000Z');
+			const end = new Date('2026-03-11T22:00:00');
+			const diff = end.getTime() - now.getTime();
+			const startDiff = start.getTime() - now.getTime();
+
+			if (startDiff > 0) {
+				alert('지금은 지원 기간이 아닙니다!')
+				return
+			}
+			else if (diff < 0) {
+				alert('지원이 마감되었습니다.')
+				return
+			}
+			window.location = "https://apply.ana.st/"
 			return;
 		}
 		alert(`${page} 페이지는 현재 작업 중에 있습니다! 조금만 기다려주세요!`);
