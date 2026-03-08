@@ -187,7 +187,7 @@
 
 				const nz = Math.sqrt(Math.max(0, 1 - dist2));
 				const lon = Math.atan2(nx, nz) + phase;
-				const lat = Math.asin(ny);
+				const lat = Math.asin(-ny);
 				const land = sampleLand(lon, lat);
 				const relief = sampleRelief(lon, lat);
 				const desert = sampleDesert(lon, lat);
