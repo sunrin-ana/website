@@ -315,18 +315,6 @@
 		clearInterval(worldSpinInterval);
 	}
 
-	function syncFirstDot(step: number, width: number, dir: number) {
-		if (step === width - 1 && dir > 0) firstDotHold = DOT_HOLD_STEPS;
-		else firstDotHold = Math.max(0, firstDotHold - 1);
-		firstDotActive = firstDotHold > 0;
-	}
-
-	function syncSecondDot(step: number, width: number, dir: number) {
-		if (step === width - 1 && dir > 0) secondDotHold = DOT_HOLD_STEPS;
-		else secondDotHold = Math.max(0, secondDotHold - 1);
-		secondDotActive = secondDotHold > 0;
-	}
-
 	function runContentAnimation() {
 		const timeline = createTimeline();
 
@@ -421,15 +409,14 @@
 								class="ana-landmark"
 								style={`left:${landmark.left}%;top:${landmark.top}%;--landmark-scale:${landmark.scale};--landmark-opacity:${landmark.opacity};`}
 							>
-								<img src="/logo.svg" alt="AnA logo" loading="lazy" draggable="false" />
 							</span>
 						{/each}
 					</div>
 				</div>
 
 				<pre id="link">
-<span class="status-dot" class:active={firstDotActive}>●</span> Connecting   |   AnA <span class="signal-track signal-track-a"><ArrowConnect onStep={syncFirstDot}/></span> Sunrin Internet High School
-<span class="status-dot" class:active={secondDotActive}>●</span> Connecting   |   AnA <span class="signal-track signal-track-b"><ArrowConnect delay={600} onStep={syncSecondDot}/></span> World
+○ Connecting   |   AnA <ArrowConnect/> Sunrin Internet High School
+○ Connecting   |   AnA <ArrowConnect delay={600}/> World
 				</pre>
 
 				<div id="description">
@@ -548,29 +535,6 @@
 		color: #111;
 	}
 
-	#link .status-dot {
-		color: #3f3f3f;
-		transition: color 80ms linear, text-shadow 80ms linear;
-	}
-
-	#link .status-dot.active {
-		color: #95ff6c;
-		text-shadow: 0 0 0.42rem rgba(149, 255, 108, 0.95);
-	}
-
-	#link .signal-track {
-		--signal-base-color: #666666;
-		--signal-light-color: #95ff6c;
-		--signal-light-transition: 90ms;
-	}
-
-	#link .signal-track-a {
-		--signal-light-transition: 90ms;
-	}
-
-	#link .signal-track-b {
-		--signal-light-transition: 130ms;
-	}
 </style>
 
 <svelte:head>
