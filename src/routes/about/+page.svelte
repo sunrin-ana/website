@@ -16,48 +16,26 @@
 	type LandmarkRender = { left: number; top: number; scale: number; opacity: number };
 
 	const LAND_POLYGONS: GeoPolygon[] = [
-		[
-			[-168, 72], [-140, 73], [-126, 66], [-111, 57], [-99, 49], [-92, 49], [-83, 26], [-98, 14],
-			[-106, 18], [-114, 24], [-121, 31], [-128, 41], [-137, 49], [-151, 58], [-165, 62]
+		[ // Eurasia
+			[-10, 35], [0, 50], [15, 60], [20, 75], [60, 80], [100, 80], [140, 75], [170, 70], [180, 65],
+			[150, 45], [130, 35], [120, 20], [105, 5], [80, 5], [70, 15], [60, 25], [40, 30], [30, 35], [10, 35]
 		],
-		[
-			[-81, 12], [-74, 10], [-67, 5], [-62, -3], [-58, -12], [-55, -22], [-52, -33], [-55, -45],
-			[-63, -54], [-72, -53], [-78, -40], [-75, -20], [-79, -5]
+		[ // Africa
+			[-17, 30], [-5, 35], [15, 37], [32, 32], [51, 12], [40, -15], [35, -35], [20, -35], [10, -30],
+			[-10, 5], [-17, 15]
 		],
-		[
-			[-74, 83], [-40, 83], [-26, 73], [-35, 60], [-50, 58], [-62, 66]
+		[ // North America
+			[-168, 65], [-140, 75], [-100, 80], [-60, 80], [-50, 50], [-65, 45], [-75, 25], [-95, 15],
+			[-110, 25], [-125, 40], [-145, 55], [-165, 60]
 		],
-		[
-			[-11, 36], [-6, 43], [2, 45], [12, 46], [22, 52], [30, 60], [40, 63], [42, 55], [34, 46],
-			[25, 42], [16, 38], [8, 36], [2, 35]
+		[ // South America
+			[-82, 12], [-70, 15], [-45, 0], [-35, -10], [-50, -40], [-70, -55], [-80, -40], [-82, -10], [-82, 5]
 		],
-		[
-			[-18, 37], [-8, 36], [2, 37], [14, 35], [25, 32], [33, 24], [35, 15], [43, 12], [51, 11],
-			[48, 4], [44, -10], [36, -21], [28, -30], [17, -35], [7, -35], [-3, -28], [-10, -15],
-			[-15, 1], [-17, 18]
+		[ // Australia
+			[113, -15], [135, -10], [153, -15], [155, -35], [140, -42], [115, -38], [113, -25]
 		],
-		[
-			[37, 31], [50, 29], [57, 22], [56, 16], [48, 12], [43, 16], [40, 24]
-		],
-		[
-			[26, 8], [40, 8], [51, 16], [61, 22], [70, 30], [82, 34], [92, 44], [108, 54], [130, 55],
-			[147, 48], [152, 37], [141, 29], [121, 24], [108, 16], [96, 10], [86, 8], [75, 12],
-			[64, 16], [52, 10], [40, 4], [30, 0]
-		],
-		[
-			[67, 24], [77, 29], [88, 24], [84, 10], [76, 8], [70, 14]
-		],
-		[
-			[95, 8], [108, 7], [115, 0], [112, -5], [104, -6], [97, -1]
-		],
-		[
-			[129, 31], [142, 45], [147, 38], [139, 32]
-		],
-		[
-			[112, -11], [154, -11], [153, -39], [131, -43], [114, -34]
-		],
-		[
-			[44, -13], [51, -16], [50, -25], [45, -26]
+		[ // Antarctica
+			[-180, -72], [180, -72], [180, -90], [-180, -90]
 		]
 	];
 
@@ -66,9 +44,7 @@
 		[1.2, 0, 0.11],
 		[-1.2, 0, 0.11],
 		[0, 1.2, 0.1],
-		[0, -1.2, 0.1],
-		[2.4, 0, 0.03],
-		[-2.4, 0, 0.03]
+		[0, -1.2, 0.1]
 	];
 
 	const LANDMARK_SITES: LandmarkSite[] = [
@@ -87,11 +63,6 @@
 	let worldRows: string[] = buildWorldRows(worldPhase);
 	let landmarks: LandmarkRender[] = projectLandmarks(worldPhase);
 	let worldSpinInterval: ReturnType<typeof setInterval> | undefined;
-	let firstDotActive = false;
-	let secondDotActive = false;
-	let firstDotHold = 0;
-	let secondDotHold = 0;
-	const DOT_HOLD_STEPS = 3;
 
 	function clamp(value: number, min: number, max: number) {
 		return Math.max(min, Math.min(max, value));
@@ -225,35 +196,31 @@
 
 				const nz = Math.sqrt(Math.max(0, 1 - dist2));
 				const lon = Math.atan2(nx, nz) + phase;
-				const lat = Math.asin(ny);
+				const lat = Math.asin(-ny);
 				const land = sampleLand(lon, lat);
 				const relief = sampleRelief(lon, lat);
 				const desert = sampleDesert(lon, lat);
 				const vegetation = sampleVegetation(lon, lat);
 
-				let light = clamp(0.08 + (nz * 0.95) + (nx * 0.4) + (ny * 0.1), 0, 1);
-				const rim = clamp((0.996 - dist2) / 0.3, 0, 1);
-				light *= 0.62 + (rim * 0.44);
+				let light = 0.48 + (nz * 0.35) + (nx * 0.08) + (-ny * 0.08); 
+				const rim = clamp((1.0 - dist2) / 0.12, 0, 1);
+				light *= 0.45 + (rim * 0.55); // Maintain the dark border
 
 				let pixel = "";
 				const polar = clamp((Math.abs(lat) - 1.17) / 0.3, 0, 1);
-				const coast = smoothstep(0.44, 0.6, land) * (1 - smoothstep(0.64, 0.8, land));
 				const landCore = smoothstep(0.66, 0.86, land);
 
 				if (polar > 0.44) {
-					pixel = pickRamp(" .:*#", (light * 0.8) + (polar * 0.36));
+					pixel = pickRamp(" .:*#", (light * 0.75) + (polar * 0.36));
 				} else if (landCore > 0.02) {
 					const terrain = clamp(
-						(light * 0.72) + (relief * 0.14) + (desert * 0.24) - (vegetation * 0.1),
+						(light * 0.68) + (relief * 0.18) + (desert * 0.22) - (vegetation * 0.12),
 						0,
 						1
 					);
 					pixel = pickRamp(".,:;=+*#%@", terrain);
-				} else if (coast > 0.03) {
-					const coastShade = clamp((light * 0.67) + (coast * 0.32), 0, 1);
-					pixel = pickRamp(".,:;-", coastShade);
 				} else {
-					const oceanShade = clamp((light * 0.56) + (relief * 0.03), 0, 1);
+					const oceanShade = clamp((light * 0.58) + (relief * 0.06), 0, 1);
 					pixel = pickRamp("`'.,-~", oceanShade);
 				}
 
@@ -277,7 +244,7 @@
 			const theta = lon - phase;
 			const cosLat = Math.cos(lat);
 			const nx = Math.sin(theta) * cosLat;
-			const ny = Math.sin(lat);
+			const ny = -Math.sin(lat);
 			const nz = Math.cos(theta) * cosLat;
 
 			if (nz <= 0.06) continue;
