@@ -9,10 +9,11 @@
 <main>
     <Halftone />
 	<p id=hero>
-		새로운 도약과 함께 성장하는 <strong
+		새로운 도약과 함께 성장하는 <button
 		class="cp"
+		type="button"
 		on:click={() => {goto("/anafetch")}}
-	>AnA</strong><br/>
+	>AnA</button><br/>
 		<strong>Application & Architecture</strong>
 	</p>
 </main>
@@ -36,5 +37,12 @@
 
 	.cp {
 		color: #334882;
+		border: 0;
+		background: transparent;
+		padding: 0;
+		margin: 0;
+		font: inherit;
+		font-weight: 700;
+		cursor: pointer;
 	}
 </style>

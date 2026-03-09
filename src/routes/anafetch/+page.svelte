@@ -44,21 +44,27 @@
     const u = getPreciseUptime();
     uptimeString = `${u.years} years, ${u.months} months, ${u.days} days, ${u.hours} hours, ${u.minutes} mins`;
 
+    const setChildDisplay = (index: number, display: "none" | "block") => {
+      const child = terminal?.children.item(index) as HTMLElement | null;
+      if (!child) return;
+      child.style.display = display;
+    };
+
     animate('#terminal', {
       onBegin: () => {
-        let afetch = new Typed('#anafetch', {
+        new Typed('#anafetch', {
           strings: ["anafetch"],
           cursorChar: '▮',
           onComplete: (s) => {
             s.cursor.remove();
-            setTimeout(() => terminal.children[1].style.display = 'block', 500);
+            setTimeout(() => setChildDisplay(1, 'block'), 500);
             setTimeout(() => {
-              terminal.children[1].style.display = 'none';
-              terminal.children[2].style.display = 'block';
+              setChildDisplay(1, 'none');
+              setChildDisplay(2, 'block');
             }, 800);
             setTimeout(() => {
-              terminal.children[2].style.display = 'none';
-              terminal.children[3].style.display = 'block';
+              setChildDisplay(2, 'none');
+              setChildDisplay(3, 'block');
             }, 1000);
           },
           typeSpeed: 30,
@@ -183,6 +189,6 @@
 
 <svelte:head>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap" rel="stylesheet">
 </svelte:head>
