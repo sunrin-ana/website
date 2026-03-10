@@ -504,22 +504,22 @@
 
 	#world pre {
 		margin: 0;
-		font-size: clamp(0.43rem, 1.2vw, 0.67rem);
+		font-size: clamp(0.43rem, 1.2vw, 0.75rem);
 		line-height: clamp(0.5rem, 1.35vw, 0.76rem);
 		letter-spacing: clamp(0rem, 0.02vw, 0.015rem);
 		opacity: 0;
 	}
 
-	#link {
-		opacity: 0;
-		color: #111;
-		max-width: 100%;
-		text-align: center;
-		white-space: pre-wrap;
-		overflow-wrap: anywhere;
-		font-size: clamp(0.5rem, 1.05vw, 0.95rem);
-		line-height: 1.35;
-	}
+	/*#link {*/
+	/*	opacity: 0;*/
+	/*	color: #111;*/
+	/*	max-width: 100%;*/
+	/*	text-align: center;*/
+	/*	white-space: pre-wrap;*/
+	/*	overflow-wrap: anywhere;*/
+	/*	font-size: clamp(0.5rem, 1.05vw, 0.95rem);*/
+	/*	line-height: 1.35;*/
+	/*}*/
 
 	@media (min-width: 1024px) {
 		#description {
