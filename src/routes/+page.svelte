@@ -43,6 +43,5 @@
 		margin: 0;
 		font: inherit;
 		font-weight: 700;
-		cursor: pointer;
 	}
 </style>
