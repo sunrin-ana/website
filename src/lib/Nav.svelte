@@ -16,8 +16,8 @@
 	const needToWorkOn = (page: PageName) => {
 		if (page === 'Join') {
 			const now = new Date();
-			const start = new Date('2026-03-09T00:00:00');
-			const end = new Date('2026-03-11T22:00:00');
+			const start = new Date('2026-03-17T12:30:00');
+			const end = new Date('2026-03-19T22:00:00');
 			const diff = end.getTime() - now.getTime();
 			const startDiff = start.getTime() - now.getTime();
 
