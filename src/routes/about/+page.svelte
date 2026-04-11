@@ -1,11 +1,10 @@
 <script lang="ts">
 	import Nav from "$lib/Nav.svelte";
-	import { onDestroy, onMount, tick } from "svelte";
-	import { onNavigate } from "$app/navigation";
+	import { onDestroy, tick } from "svelte";
+	import { onNavigate, afterNavigate } from "$app/navigation";
 	import { waapi, utils } from "animejs";
 	import ArrowConnect from "$lib/ArrowConnect.svelte";
 	import earthLandMask from "$lib/earth-land-mask.json";
-	import Page from "../+page.svelte";
 
 	// ── 지구본 상수 ──
 	const WORLD_COLS = 74;
@@ -31,6 +30,22 @@
 	let worldSpinInterval: ReturnType<typeof setInterval> | undefined;
 	let activeInterval: ReturnType<typeof setInterval> | undefined;
 	let activeTimeouts: ReturnType<typeof setTimeout>[] = [];
+
+	let uptimeString = "";
+	function getPreciseUptime() {
+		const base = new Date('2011-03-01T00:00:00+09:00');
+		const now = new Date();
+		let years = now.getFullYear() - base.getFullYear();
+		let months = now.getMonth() - base.getMonth();
+		let days = now.getDate() - base.getDate();
+		let hours = now.getHours() - base.getHours();
+		let minutes = now.getMinutes() - base.getMinutes();
+		if (minutes < 0) { minutes += 60; hours--; }
+		if (hours < 0) { hours += 24; days--; }
+		if (days < 0) { const p = new Date(now.getFullYear(), now.getMonth(), 0); days += p.getDate(); months--; }
+		if (months < 0) { months += 12; years--; }
+		return `${years} years, ${months} months, ${days} days, ${hours} hours, ${minutes} mins`;
+	}
 
 	// ── 지구본 렌더링 ──
 	function clamp(v: number, a: number, b: number) { return Math.max(a, Math.min(b, v)); }
@@ -183,10 +198,9 @@
 			const preEl = qs<HTMLElement>(ln.pre);
 			const arrowEl = qs<HTMLElement>(ln.arrow);
 			const sufEl = qs<HTMLElement>(ln.suf);
-			if (preEl) await typeCommand(preEl, ln.p, 38);
+			if (preEl) preEl.textContent = ln.p;
 			if (arrowEl) arrowEl.style.opacity = '1';
-			if (sufEl) await typeCommand(sufEl, ln.s, 38);
-			await sleep(120);
+			if (sufEl) sufEl.textContent = ln.s;
 		}
 		await sleep(400);
 		if (!allowReveal) return;
@@ -221,7 +235,19 @@
 	}
 
 	// ── 인트로: 원래 "We're connecting the world" ──
-	onMount(() => {
+	afterNavigate(async () => {
+		allowReveal = true;
+		showContent = false;
+		uptimeString = getPreciseUptime();
+		clearInterval(worldSpinInterval);
+		clearInterval(activeInterval);
+		activeTimeouts.forEach(clearTimeout);
+		activeTimeouts = [];
+		worldPhase = 0.33 + Math.PI;
+		worldRows = buildWorldRows(worldPhase);
+
+		await tick();
+
 		waapi.animate("#intro-title", {
 			opacity: { from: 0, to: 1, duration: 620 },
 			scale: { from: 0.56, to: 1.06, duration: 680 }
@@ -263,7 +289,7 @@
 			<div id="world-stage">
 				<!-- boot 커맨드 (지구 위) -->
 				<div class="boot-prompt" style="opacity:0">
-					<span class="p-user">ana@sunrin</span><span class="p-sep">:</span><span class="p-path">~</span><span class="p-dollar">$</span>&nbsp;<span class="boot-typed"></span><span class="boot-cur blink">_</span>
+					<span class="p-user">sunrin@ana</span><span class="p-sep">:</span><span class="p-path">~</span><span class="p-dollar">$</span>&nbsp;<span class="boot-typed"></span><span class="boot-cur blink">_</span>
 				</div>
 
 				<!-- 지구본 -->
@@ -291,29 +317,29 @@
 							<span class="p-user">sunrin@ana</span><span class="p-sep">:</span><span class="p-path">~</span><span class="p-dollar">$</span>&nbsp;<span class="prompt-typed"></span><span class="prompt-cur blink">_</span>
 						</div>
 						<div class="term-content" style="opacity:0;transform:translateY(8px)">
-							<div class="nf-row">
-								<div class="nf-label">
-									<div class="nf-header">## Profile</div>
-									<pre class="ascii-logo">
-<span class="logo-c">                     ___________</span>
-<span class="logo-c">                   /########\</span>
-<span class="logo-c">                 /###/       \###\</span>
-<span class="logo-c">               /###/           \###\</span>
-<span class="logo-c">             /###/               \###\</span>
-<span class="logo-c">           /###/                   \###\</span>
-<span class="logo-c">         /###/  \\                   \###\</span>
-<span class="logo-c">       /###/      \\                   \###\</span>
-<span class="logo-c">     /###/          \\                   \###\</span>
-<span class="logo-c">   /###/              \\                   \###\</span>
-<span class="logo-c"> /###/                  \\                   \###\</span>
-<span class="logo-c">‾‾‾‾‾                     ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾</span></pre>
-								</div>
-								<div class="nf-body">
-									<p><strong>Application & Architecture<span>AnA</span></strong></p>
-									<p>We're connecting the world</p>
-									<p>선린인터넷고등학교의 백엔드 및 아키텍쳐 구조, 서버 연구 동아리입니다.</p>
-								</div>
-							</div>
+							<pre class="anafetch-pre">
+							<br>
+<span class="logo-c">               xMMMMMMMMN               </span>  <span class="info-key">ana</span>@<span class="info-key">ana</span>
+<span class="logo-c">              ,MMMMMMMMMMl              </span>  -------
+<span class="logo-c">             .WMMMMMMMMMMM'             </span>  <span class="info-key">OS</span>: Application &amp; Architecture 17 neurons
+<span class="logo-c">             NMMMMMMMMMMMMW.            </span>  <span class="info-key">Host</span>: Sunrin Internet High School Rev 121.0
+<span class="logo-c">            KMMMMMN  OMMMMMN            </span>  <span class="info-key">Kernel</span>: 120th-dept-sw (<span class="effect">! UPDATE REQUIRED</span>)
+<span class="logo-c">           OMMMMMM.   MMMMMMX           </span>  <span class="info-key">Uptime</span>: {uptimeString}
+<span class="logo-c">          oMMMMMM;    .MMMMMMd          </span>  <span class="info-key">Packages</span>: 4 (class)
+<span class="logo-c">         .MMMMMMk      oMMMMMM,         </span>  <span class="info-key">Shell</span>: An-Shell 17.0.0
+<span class="logo-c">         WMMMMMMc       NMMMMMW.        </span>  <span class="info-key">CPU</span>: 86B * 10 @ neurons
+<span class="logo-c">        KMMMMMMMW       .MMMMMMN        </span>  <span class="info-key">Memory</span>: 16B * 10 neurons
+<span class="logo-c">       kMMMMMMMMMO       :MMMMMMK       </span>
+<span class="logo-c">      lMMMMMMN xMM;       OMMMMMMk      </span>  <span class="info-key">Email</span>: ana@sunrint.hs.kr
+<span class="logo-c">     'MMMMMMM   WMW        MMMMMMMl     </span>  <span class="info-key">Location</span>: 341 @ SRIHS
+<span class="logo-c">    .WMMMMMM,   'MMX       .MMMMMMM'    </span>
+<span class="logo-c">    NMMMMMMx     xMMd       cMMMMMMW    </span>
+<span class="logo-c">   0MMMMMMN       WMM.       0MMMMMMX   </span>
+<span class="logo-c">  oMMMMMMM        .MMW        MMMMMMMO  </span>
+<span class="logo-c"> ,MMMMMMMc         cMM0.......NMMMMMMMo </span>
+<span class="logo-c">.WMMMMMMX           0MMMMMMMMMMMMMMMMMM,</span>
+<span class="logo-c">KMMMMMMM;           ,MMMMMMMMMMMMMMMMMMW</span>
+							</pre>
 						</div>
 					</div>
 
@@ -323,11 +349,10 @@
 						</div>
 						<div class="term-content" style="opacity:0;transform:translateY(8px)">
 							<div class="nf-section">
-								<div class="nf-header">## Tech Stack</div>
 								<div class="spec-list">
 									<div class="spec-item"><span class="tag">[FRONTEND]</span> React, Next.js, Svelte, Swift, etc.</div>
-									<div class="spec-item"><span class="tag">[BACKEND]</span> Spring, Node.js, Go, FastAPI, Javascripts, Java, Flask, etc.</div>
-									<div class="spec-item"><span class="tag">[DB]</span> Docker, SQL, MongoDB, etc.</div>
+									<div class="spec-item"><span class="tag">[BACKEND]</span> Spring, Node.js, Go, FastAPI, Java, Flask, etc.</div>
+									<div class="spec-item"><span class="tag">[INFRA]</span> Docker, SQL, MongoDB, etc.</div>
 								</div>
 							</div>
 						</div>
@@ -362,17 +387,16 @@
 		padding: 0 3rem 2rem;
 		max-width: 1100px;
 		box-sizing: border-box;
+		font-family: Menlo, Monaco, monospace;
+		font-size: 13px;
+		font-weight: 400;
+		line-height: 1.25;
+		letter-spacing: -0.3px;
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+		font-variant-ligatures: none;
 	}
 	section { width: 100%; }
-
-	/* 터미널 요소: IBM Plex Mono - 프롬프트 창 폰트 */
-	.boot-prompt, .type-prompt,
-	#world pre, #link, .link-line, .ascii-logo,
-	.p-user, .p-sep, .p-path, .p-dollar,
-	.boot-typed, .boot-cur, .prompt-typed, .prompt-cur,
-	.lp1, .la1, .ls1, .lp2, .la2, .ls2 {
-		font-family: 'IBM Plex Mono', monospace;
-	}
 
 	/* ── 인트로 ── */
 	#intro-overlay {
@@ -400,12 +424,31 @@
 	}
 
 	/* ── 프롬프트 공통 색상 ── */
-	.p-user  { color: #2e7d32; font-weight: 700; }
-	.p-sep   { color: #555; }
+	.p-user  { color: #2e7d32; font-weight: 800; letter-spacing: -1px;}
+	.p-sep   { color: #555; letter-spacing: -1px;}
 	.p-path  { color: #1565c0; font-weight: 700; }
 	.p-dollar { color: #333; }
 	.blink { animation: blink 1s step-end infinite; }
 	@keyframes blink { 50% { opacity: 0; } }
+
+	/* ── profile (anafetch) ── */
+	.anafetch-pre {
+		font-size: clamp(0.5rem, 1.1vw, 0.75rem);
+		line-height: 1.2;
+		margin: 0;
+		padding-bottom: 1.5rem;
+		color: #333;
+		overflow-x: auto;
+	}
+	.logo-c {
+		color: #282828;
+		font-size: clamp(0.43rem, 1.2vw, 0.75rem);
+		line-height: 1.111em;
+		letter-spacing: 0;
+		font-weight: 600;
+	}
+	.info-key { color: hwb(183 26% 45%); font-weight: 900; letter-spacing: -1px; }
+	.effect { color: hsl(30, 100%, 35%); }
 
 	/* ── 월드 스테이지 ── */
 	#world-stage {
@@ -420,7 +463,6 @@
 		font-size: clamp(0.75rem, 1.8vw, 1rem);
 		margin-bottom: 1rem;
 		color: #333;
-		line-height: 1.5;
 	}
 
 	/* ── 지구본 ── */
@@ -432,9 +474,11 @@
 	}
 	#world pre {
 		margin: 0;
+		
 		font-size: clamp(0.43rem, 1.2vw, 0.75rem);
 		line-height: 1.111em;
-		letter-spacing: 0;
+		letter-spacing: -1;
+		font-weight: 400;
 		color: #1a1a1a7a;
 	}
 
@@ -454,53 +498,36 @@
 	/* ── 터미널 바디 ── */
 	#terminal-body {
 		width: 100%;
-		margin-top: clamp(2rem, 5vw, 3rem);
+		margin-top: clamp(1.5rem, 3vw, 2rem);
 		display: flex;
 		flex-direction: column;
-		gap: 2rem;
+		gap: 1.25rem;
 	}
 
-	.term-step { width: 100%; }
+	.term-step {
+		width: fit-content;
+		max-width: 100%;
+	}
 
 	.type-prompt {
 		font-size: clamp(0.75rem, 1.8vw, 1rem);
 		color: #555;
 		margin-bottom: 0.75rem;
-		line-height: 1.5;
-	}
-
-	/* ── profile 행 ── */
-	.nf-row {
-		display: grid;
-		grid-template-columns: auto 1fr;
-		gap: 2rem;
-		align-items: flex-end;
-		padding-bottom: 1.5rem;
-	}
-	.ascii-logo {
-		font-size: clamp(0.7rem, 1.5vw, 0.9rem);
-		line-height: 1.25;
-		margin: 0;
-	}
-	.logo-c { color: #334882; font-weight: 800; }
-	.nf-body p {
-		margin: 0 0 0.4rem;
-		font-size: clamp(0.75rem, 1.8vw, 1rem);
-		line-height: 1.6;
-		color: #333;
-		font-family: 'IBM Plex Mono', monospace;
-	}
-	.nf-body p strong span{
-		color: #334882;
-		margin-left: 20px;
 	}
 
 	/* ── tech stack ── */
 	.nf-section { padding-bottom: 1.5rem; }
-	.nf-header { font-weight: 800; font-size: clamp(0.75rem, 1.8vw, 1rem); color: #334882; margin-bottom: 0.75rem; font-family: 'IBM Plex Mono', monospace; }
-	.spec-list { display: flex; flex-direction: column; gap: 0.4rem; }
-	.spec-item { font-size: clamp(0.75rem, 1.8vw, 1rem); line-height: 1.6; color: #333; font-family: 'IBM Plex Mono', monospace; }
-	.tag { color: #2e7d32; font-weight: 600; margin-right: 0.75rem; }
+	/* .nf-header {
+		font-weight: 700;
+		font-size: clamp(0.75rem, 1.8vw, 1rem);
+		color: #334882;
+		margin-bottom: 0.5rem;
+		border-left: 3px solid #334882;
+		padding-left: 0.6rem;
+	} */
+	.spec-list { display: flex; flex-direction: column; gap: 0.3rem; }
+	.spec-item { color: #333; }
+	.tag { color: #2e7d32; font-weight: 600; margin-right: 0.25rem; }
 
 	/* ── 푸터 ── */
 	footer {
@@ -532,7 +559,6 @@
 	@media (max-width: 768px) {
 		main { margin-top: 4.5rem; padding: 0 1.25rem clamp(12rem, 26vh, 17rem); }
 		#intro-title { font-size: clamp(2rem, 11vw, 3.2rem); letter-spacing: 0.04em; }
-		.nf-row { grid-template-columns: 1fr; gap: 1rem; }
 		.link-line { white-space: pre-wrap; word-break: break-all; }
 	}
 	@media (max-width: 430px) {
