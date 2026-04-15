@@ -167,7 +167,8 @@
 	.navbar-menu {
 		display: flex;
 		flex-direction: row;
-		margin-left: auto;
+		flex: 1;
+		margin-left: 2.5rem;
 		align-items: center;
 		background-color: #f9f9f9;
 	}
@@ -213,7 +214,7 @@
 	.navbar-icons {
 		display: flex;
 		flex-direction: row;
-		margin-left: 1.5rem;
+		margin-left: auto;
 		gap: 0.75rem;
 	}
 
