@@ -25,6 +25,113 @@
 
 	let showContent = false;
 	let allowReveal = true;
+
+	// ── 인터랙티브 터미널 ──
+	let termInput = '';
+	let termHistory: { cmd: string; lines: string[] }[] = [];
+	let termInputEl: HTMLInputElement;
+	let cursorPos = 0;
+
+	const COMMANDS: Record<string, string[]> = {
+		'help': [
+			'usage: <command> [args]',
+			'',
+			'  ls -al                    디렉토리 목록',
+			'  cat ./ana/README.md       AnA 소개',
+			'  cat ./ana/members.txt     부원 구성',
+			'  git log --oneline         동아리 연혁',
+			'  cat ./ana/motto.txt       동아리 모토',
+			'  cat ./contact.json        연락처',
+			'  whoami                    현재 사용자',
+			'  clear                     터미널 초기화',
+		],
+		'ls -al': [
+			'total 48',
+			'drwxr-xr-x  6 ana  sunrin   192 Mar  1 00:00 ./',
+			'drwxr-xr-x  3 ana  sunrin    96 Mar  1 00:00 ../',
+			'drwxr-xr-x  4 ana  sunrin   128 Mar  1 00:00 ana/',
+			'drwxr-xr-x  8 ana  sunrin   256 Jan 15 12:34 projects/',
+			'-rw-r--r--  1 ana  sunrin  1024 Mar  1 00:00 contact.json',
+			'-rwxr-xr-x  1 ana  sunrin   512 Mar 17 12:30 apply.sh',
+		],
+		'cat ./ana/members.txt': [
+			'총 부원 수: 약 30명',
+			'',
+			'1학년  ██████████  신입 부원',
+			'2학년  ████████    활동 부원',
+			'3학년  ██████      선배 / 멘토',
+			'',
+			'── 모집: 매년 3월 ──',
+		],
+		'git log --oneline': [
+			'a3f1c2e (HEAD) 웹사이트 v2 리디자인 — 2025',
+			'b7d4e91 웹사이트 v1 런칭 — 2023',
+			'c2a9f03 GitHub 오픈소스 활동 시작 — 2021',
+			'e8b1d74 AnAlog 프로젝트 시작 — 2017',
+			'0000001 (origin) 동아리 창설 — 2011',
+		],
+		'cat ./ana/motto.txt': [
+			'',
+			'  "코드로 세상을 연결한다"',
+			'',
+			'  Application  — 무언가를 만드는 것',
+			'  Architecture — 구조를 설계하는 것',
+			'',
+		],
+		'cat ./contact.json': [
+			'{',
+			'  "email":     "ana@sunrint.hs.kr",',
+			'  "instagram": "@sunrin_ana",',
+			'  "github":    "github.com/sunrin-ana",',
+			'  "facebook":  "fb.com/sunrinana"',
+			'}',
+		],
+		'whoami': ['guest — 방문자 모드로 접속 중 (read-only)'],
+		'cat ./easteregg/readme.md': [
+			'',
+			'          ██╗    ██╗███████╗██╗      ██████╗ ██████╗ ███╗   ███╗███████╗',
+			'          ██║    ██║██╔════╝██║     ██╔════╝██╔═══██╗████╗ ████║██╔════╝',
+			'          ██║ █╗ ██║█████╗  ██║     ██║     ██║   ██║██╔████╔██║█████╗  ',
+			'          ██║███╗██║██╔══╝  ██║     ██║     ██║   ██║██║╚██╔╝██║██╔══╝  ',
+			'          ╚███╔███╔╝███████╗███████╗╚██████╗╚██████╔╝██║ ╚═╝ ██║███████╗',
+			'           ╚══╝╚══╝ ╚══════╝╚══════╝ ╚═════╝ ╚═════╝ ╚═╝     ╚═╝╚══════╝',
+			'',
+			'',
+			'  홈페이지: ana.st',
+			'  Develop at 15/04/2026',
+			'',
+			'',
+			'  enter "usage: <command> [args]"'
+
+		],
+	};
+
+	function execCommand(raw: string) {
+		const cmd = raw.trim().toLowerCase();
+		if (cmd === 'clear') { termHistory = []; return; }
+		const lines = COMMANDS[cmd] ?? [`command not found: ${raw} — 'help'를 입력해보세요.`];
+		termHistory = [...termHistory, { cmd: raw, lines }];
+		tick().then(() => {
+			const el = document.querySelector('#term-scroll');
+			if (el) el.scrollTop = el.scrollHeight;
+		});
+	}
+
+	function syncCursor() {
+		tick().then(() => {
+			if (termInputEl) cursorPos = termInputEl.selectionStart ?? termInput.length;
+		});
+	}
+
+	function onTermKey(e: KeyboardEvent) {
+		if (e.key === 'Enter' && !e.isComposing) {
+			execCommand(termInput);
+			termInput = '';
+			cursorPos = 0;
+			return;
+		}
+		syncCursor();
+	}
 	let worldPhase = 0.33 + Math.PI;
 	let worldRows: string[] = buildWorldRows(worldPhase);
 	let worldSpinInterval: ReturnType<typeof setInterval> | undefined;
@@ -225,6 +332,15 @@
 				await sleep(500);
 			}
 		}
+
+		// 인터랙티브 터미널 등장 + 자동 포커스
+		const termEl = qs<HTMLElement>('#term-scroll');
+		if (termEl) {
+			termEl.style.transition = 'opacity 0.4s ease';
+			termEl.style.opacity = '1';
+		}
+		await sleep(400);
+		termInputEl?.focus({ preventScroll: true });
 	}
 
 	async function revealContent() {
@@ -318,28 +434,28 @@
 						</div>
 						<div class="term-content" style="opacity:0;transform:translateY(8px)">
 							<pre class="anafetch-pre">
-							<br>
-<span class="logo-c">               xMMMMMMMMN               </span>  <span class="info-key">ana</span>@<span class="info-key">ana</span>
-<span class="logo-c">              ,MMMMMMMMMMl              </span>  -------
+<span class="logo-c">               xMMMMMMMMN               </span>  <span class="info-key">ana</span>@<span class="info-key">sunrin</span>
+<span class="logo-c">              ,MMMMMMMMMMl              </span>  --------------------
 <span class="logo-c">             .WMMMMMMMMMMM'             </span>  <span class="info-key">OS</span>: Application &amp; Architecture 17 neurons
 <span class="logo-c">             NMMMMMMMMMMMMW.            </span>  <span class="info-key">Host</span>: Sunrin Internet High School Rev 121.0
 <span class="logo-c">            KMMMMMN  OMMMMMN            </span>  <span class="info-key">Kernel</span>: 120th-dept-sw (<span class="effect">! UPDATE REQUIRED</span>)
 <span class="logo-c">           OMMMMMM.   MMMMMMX           </span>  <span class="info-key">Uptime</span>: {uptimeString}
 <span class="logo-c">          oMMMMMM;    .MMMMMMd          </span>  <span class="info-key">Packages</span>: 4 (class)
 <span class="logo-c">         .MMMMMMk      oMMMMMM,         </span>  <span class="info-key">Shell</span>: An-Shell 17.0.0
-<span class="logo-c">         WMMMMMMc       NMMMMMW.        </span>  <span class="info-key">CPU</span>: 86B * 10 @ neurons
-<span class="logo-c">        KMMMMMMMW       .MMMMMMN        </span>  <span class="info-key">Memory</span>: 16B * 10 neurons
-<span class="logo-c">       kMMMMMMMMMO       :MMMMMMK       </span>
-<span class="logo-c">      lMMMMMMN xMM;       OMMMMMMk      </span>  <span class="info-key">Email</span>: ana@sunrint.hs.kr
-<span class="logo-c">     'MMMMMMM   WMW        MMMMMMMl     </span>  <span class="info-key">Location</span>: 341 @ SRIHS
-<span class="logo-c">    .WMMMMMM,   'MMX       .MMMMMMM'    </span>
-<span class="logo-c">    NMMMMMMx     xMMd       cMMMMMMW    </span>
-<span class="logo-c">   0MMMMMMN       WMM.       0MMMMMMX   </span>
+<span class="logo-c">         WMMMMMMc       NMMMMMW.        </span>  <span class="info-key">Resolution</span>: 341 x 121 @ Sunrin
+<span class="logo-c">        KMMMMMMMW       .MMMMMMN        </span>  <span class="info-key">DE</span>: IntelliJ IDEA / VS Code
+<span class="logo-c">       kMMMMMMMMMO       :MMMMMMK       </span>  <span class="info-key">WM</span>: Git Compositor
+<span class="logo-c">      lMMMMMMN xMM;       OMMMMMMk      </span>  <span class="info-key">Terminal</span>: An-Terminal
+<span class="logo-c">     'MMMMMMM   WMW        MMMMMMMl     </span>  <span class="info-key">Terminal Font</span>: SFMonoTerminal-Regular
+<span class="logo-c">    .WMMMMMM,   'MMX       .MMMMMMM'    </span>  <span class="info-key">CPU</span>: 86B * 10 @ neurons
+<span class="logo-c">    NMMMMMMx     xMMd       cMMMMMMW    </span>  <span class="info-key">GPU</span>: Ideas * ∞ @ creativity
+<span class="logo-c">   0MMMMMMN       WMM.       0MMMMMMX   </span>  <span class="info-key">Memory</span>: 16B * 10 neurons
 <span class="logo-c">  oMMMMMMM        .MMW        MMMMMMMO  </span>
-<span class="logo-c"> ,MMMMMMMc         cMM0.......NMMMMMMMo </span>
-<span class="logo-c">.WMMMMMMX           0MMMMMMMMMMMMMMMMMM,</span>
+<span class="logo-c"> ,MMMMMMMc         cMM0.......NMMMMMMMo </span>  <span class="info-key">Email</span>: ana@sunrint.hs.kr
+<span class="logo-c">.WMMMMMMX           0MMMMMMMMMMMMMMMMMM,</span>  <span class="info-key">Location</span>: 341 @ SRIHS
 <span class="logo-c">KMMMMMMM;           ,MMMMMMMMMMMMMMMMMMW</span>
-							</pre>
+<span class="logo-c">                                        </span>  <span class="pal-1">███</span><span class="pal-2">███</span><span class="pal-3">███</span><span class="pal-4">███</span><span class="pal-5">███</span><span class="pal-6">███</span><span class="pal-7">███</span><span class="pal-8">███</span>
+</pre>
 						</div>
 					</div>
 
@@ -350,20 +466,38 @@
 						<div class="term-content" style="opacity:0;transform:translateY(8px)">
 							<div class="nf-section">
 								<div class="spec-list">
-									<div class="spec-item"><span class="tag">[FRONTEND]</span> ... etc.</div>
-									<div class="spec-item"><span class="tag">[BACKEND]</span> FastAPI, etc.</div>
-									<div class="spec-item"><span class="tag">[INFRA]</span> Docker, SQL, etc.</div>
+									<div class="spec-item"><span class="tag">	[FRONTEND]</span>・・・・・・・・・・・・・・・・・・・・・・・・ ... etc.&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;- 2026_ana</div>
+									<div class="spec-item"><span class="tag">	[BACKEND]&ensp;</span>・・・・・・・・・・・・・・・・・・・・・・・・FastAPI, etc.&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; - 2026_ana</div>
+									<div class="spec-item"><span class="tag">	[INFRA]&emsp;&emsp;</span> ・・・・・・・・・・・・・・・・・・・・・・・・Docker, SQL, etc.&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; - 2026_ana</div>
 								</div>
 							</div>
 						</div>
 					</div>
 
-					<!-- 마지막 커서 -->
-					<div class="term-step">
-						<div class="type-prompt" data-cmd="" style="opacity:0">
-							<span class="p-user">sunrin@ana</span><span class="p-sep">:</span><span class="p-path">~</span><span class="p-dollar">$</span>&nbsp;<span class="prompt-cur blink">█</span>
+					<!-- 인터랙티브 터미널 -->
+					<div class="term-step" id="term-scroll" style="opacity:0">
+						{#each termHistory as entry}
+							<div class="type-prompt">
+								<span class="p-user">sunrin@ana</span><span class="p-sep">:</span><span class="p-path">~</span><span class="p-dollar">$</span>&nbsp;{entry.cmd}
+							</div>
+							<div class="term-output">
+								{#each entry.lines as line}
+									<div>{line}</div>
+								{/each}
+							</div>
+						{/each}
+						<div class="type-prompt term-input-line" role="textbox" tabindex="0" onclick={() => { termInputEl.focus(); syncCursor(); }} onkeydown={() => termInputEl.focus()}>
+							<span class="p-user">sunrin@ana</span><span class="p-sep">:</span><span class="p-path">~</span><span class="p-dollar">$</span>&nbsp;<span class="term-typed">{termInput.slice(0, cursorPos)}<span class="term-cur blink">{termInput[cursorPos] ?? '\u00a0'}</span>{termInput.slice(cursorPos + 1)}</span>
 						</div>
-						<div class="term-content"></div>
+						<input
+							bind:this={termInputEl}
+							bind:value={termInput}
+							onkeydown={onTermKey}
+							oninput={syncCursor}
+							class="term-hidden-input"
+							autocomplete="off"
+							spellcheck="false"
+						/>
 					</div>
 
 				</div>
@@ -449,6 +583,14 @@
 	}
 	.info-key { color: hwb(183 26% 45%); font-weight: 900; letter-spacing: -1px; }
 	.effect { color: hsl(30, 100%, 35%); }
+	.pal-1 { color: #4e4e4e; }
+	.pal-2 { color: #cc3e3e; }
+	.pal-3 { color: #4caf50; }
+	.pal-4 { color: #c8a227; }
+	.pal-5 { color: #3a7abf; }
+	.pal-6 { color: #9b59b6; }
+	.pal-7 { color: #2aa198; }
+	.pal-8 { color: #cccccc; }
 
 	/* ── 월드 스테이지 ── */
 	#world-stage {
@@ -456,6 +598,7 @@
 		display: flex; flex-flow: column;
 		align-items: center;
 	}
+
 
 	/* boot 커맨드 줄 */
 	.boot-prompt {
@@ -513,6 +656,31 @@
 		font-size: clamp(0.75rem, 1.8vw, 1rem);
 		color: #555;
 		margin-bottom: 0.75rem;
+	}
+
+	/* ── 인터랙티브 터미널 ── */
+	#term-scroll {
+		width: 100%;
+		max-width: 100%;
+		cursor: text;
+	}
+	.term-hidden-input {
+		position: absolute;
+		opacity: 0;
+		pointer-events: none;
+		width: 0;
+		height: 0;
+	}
+	.term-input-line { cursor: text; margin-bottom: 0; }
+	.term-typed { white-space: pre; }
+	.term-cur { background: #333; color: #f5f5f5; }
+	.term-output {
+		font-size: clamp(0.75rem, 1.8vw, 1rem);
+		color: #444;
+		margin-bottom: 0.75rem;
+		padding-left: 0.5rem;
+		border-left: 2px solid #ddd;
+		line-height: 1.6;
 	}
 
 	/* ── tech stack ── */
