@@ -350,9 +350,9 @@
 						<div class="term-content" style="opacity:0;transform:translateY(8px)">
 							<div class="nf-section">
 								<div class="spec-list">
-									<div class="spec-item"><span class="tag">[FRONTEND]</span> React, Next.js, Svelte, Swift, etc.</div>
-									<div class="spec-item"><span class="tag">[BACKEND]</span> Spring, Node.js, Go, FastAPI, Java, Flask, etc.</div>
-									<div class="spec-item"><span class="tag">[INFRA]</span> Docker, SQL, MongoDB, etc.</div>
+									<div class="spec-item"><span class="tag">[FRONTEND]</span> ... etc.</div>
+									<div class="spec-item"><span class="tag">[BACKEND]</span> FastAPI, etc.</div>
+									<div class="spec-item"><span class="tag">[INFRA]</span> Docker, SQL, etc.</div>
 								</div>
 							</div>
 						</div>
