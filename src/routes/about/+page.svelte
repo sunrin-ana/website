@@ -43,17 +43,16 @@
 	}
 	const LAND_MASK_BITS = decodeMaskBits(earthLandMask.data);
 
-	let globeFontSizePx = 12;
 	let resizeObserver: ResizeObserver | undefined;
 
 	function updateGlobeSize() {
 		if (typeof document === 'undefined') return;
 		const stageEl = document.getElementById('world-stage');
-		if (!stageEl) return;
-		const availW = stageEl.clientWidth;
-		// 선형 스케일: 너비 × 0.013 → 1000px에서 13px, 400px에서 5.2px
-		// 지구본 너비 ≈ availW × 58% (어느 화면에서나 일정 비율 유지)
-		globeFontSizePx = Math.max(4, Math.min(13.5, availW * 0.013));
+		const worldEl = document.getElementById('world');
+		if (!stageEl || !worldEl) return;
+		// Svelte reactive 시스템 없이 DOM 직접 조작 → 윈도우/맥 모두 동일하게 동작
+		const px = Math.max(4, Math.min(13.5, stageEl.clientWidth * 0.013));
+		worldEl.style.fontSize = px + 'px';
 	}
 
 	let showContent = false;
@@ -455,7 +454,7 @@
 				</div>
 
 				<!-- 지구본 -->
-				<div id="world" style:font-size="{globeFontSizePx}px">
+				<div id="world">
 					{#each worldRows as row}
 						<pre style="opacity:0">{row}</pre>
 					{/each}
@@ -602,7 +601,7 @@
 	#intro-title {
 		margin: 0;
 		font-size: clamp(2.5rem, 9vw, 6.4rem);
-		font-family: "Pretendard Variable", Pretendard, sans-serif;
+		font-family: "JetBrains Mono", monospace;
 		font-weight: 700;
 		letter-spacing: -0.01em;
 		text-align: center;
