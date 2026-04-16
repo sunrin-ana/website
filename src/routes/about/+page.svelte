@@ -10,8 +10,28 @@
 	const WORLD_COLS = 74;
 	const WORLD_ROWS = 36;
 	const WORLD_RADIUS = 16.8;
-	const X_ASPECT = 0.54;
+	let X_ASPECT = 0.54; // 실제 폰트 문자 비율로 동적 갱신됨
 	const RAD_TO_DEG = 180 / Math.PI;
+
+	// 현재 폰트의 문자 가로/세로 비율을 측정해 X_ASPECT를 보정
+	function measureCharAspect(): number {
+		if (typeof document === 'undefined') return 0.54;
+		const el = document.createElement('pre');
+		el.style.cssText = [
+			'position:fixed', 'top:-9999px', 'left:-9999px',
+			'visibility:hidden', 'pointer-events:none',
+			"font-family:'SFMono-Terminal','IBM Plex Mono',Menlo,Monaco,Consolas,'Courier New',monospace",
+			'font-size:0.75rem', 'line-height:1.111em', 'letter-spacing:0',
+			'white-space:pre', 'margin:0', 'padding:0'
+		].join(';');
+		el.textContent = 'X'.repeat(50) + '\n' + 'X'.repeat(50);
+		document.body.appendChild(el);
+		const rect = el.getBoundingClientRect();
+		document.body.removeChild(el);
+		const lineH = rect.height / 2;
+		const charW = rect.width / 50;
+		return (charW > 0 && lineH > 0) ? charW / lineH : 0.54;
+	}
 	const LAND_MASK_WIDTH = earthLandMask.width;
 	const LAND_MASK_HEIGHT = earthLandMask.height;
 
@@ -22,6 +42,19 @@
 		return bytes;
 	}
 	const LAND_MASK_BITS = decodeMaskBits(earthLandMask.data);
+
+	let globeFontSizePx = 12;
+	let resizeObserver: ResizeObserver | undefined;
+
+	function updateGlobeSize() {
+		if (typeof document === 'undefined') return;
+		const stageEl = document.getElementById('world-stage');
+		if (!stageEl) return;
+		const availW = stageEl.clientWidth;
+		// 선형 스케일: 너비 × 0.013 → 1000px에서 13px, 400px에서 5.2px
+		// 지구본 너비 ≈ availW × 58% (어느 화면에서나 일정 비율 유지)
+		globeFontSizePx = Math.max(4, Math.min(13.5, availW * 0.013));
+	}
 
 	let showContent = false;
 	let allowReveal = true;
@@ -101,7 +134,7 @@
 			'  Develop at 15/04/2026',
 			'',
 			'',
-			'  enter "usage: <command> [args]"'
+			'  enter "usage: <command> [args]" or "help"'
 
 		],
 	};
@@ -347,6 +380,14 @@
 		if (!allowReveal) return;
 		showContent = true;
 		await tick();
+		// DOM 생성 후 지구본 크기 계산 + 리사이즈 감지
+		updateGlobeSize();
+		resizeObserver?.disconnect();
+		const stageEl = document.getElementById('world-stage');
+		if (stageEl) {
+			resizeObserver = new ResizeObserver(() => updateGlobeSize());
+			resizeObserver.observe(stageEl);
+		}
 		runSequence();
 	}
 
@@ -360,6 +401,10 @@
 		activeTimeouts.forEach(clearTimeout);
 		activeTimeouts = [];
 		worldPhase = 0.33 + Math.PI;
+
+		// 폰트 로드 완료 후 실제 문자 비율 측정 → 지구본 원형 보정
+		await document.fonts.ready;
+		X_ASPECT = measureCharAspect();
 		worldRows = buildWorldRows(worldPhase);
 
 		await tick();
@@ -389,6 +434,7 @@
 		clearInterval(activeInterval);
 		activeTimeouts.forEach(clearTimeout);
 		stopWorldSpin();
+		resizeObserver?.disconnect();
 	});
 </script>
 
@@ -409,7 +455,7 @@
 				</div>
 
 				<!-- 지구본 -->
-				<div id="world" style="opacity:0">
+				<div id="world" style:font-size="{globeFontSizePx}px">
 					{#each worldRows as row}
 						<pre style="opacity:0">{row}</pre>
 					{/each}
@@ -466,9 +512,24 @@
 						<div class="term-content" style="opacity:0;transform:translateY(8px)">
 							<div class="nf-section">
 								<div class="spec-list">
-									<div class="spec-item"><span class="tag">	[FRONTEND]</span>・・・・・・・・・・・・・・・・・・・・・・・・ ... etc.&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;- 2026_ana</div>
-									<div class="spec-item"><span class="tag">	[BACKEND]&ensp;</span>・・・・・・・・・・・・・・・・・・・・・・・・FastAPI, etc.&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; - 2026_ana</div>
-									<div class="spec-item"><span class="tag">	[INFRA]&emsp;&emsp;</span> ・・・・・・・・・・・・・・・・・・・・・・・・Docker, SQL, etc.&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; - 2026_ana</div>
+									<div class="spec-item">
+										<span class="spec-tag">[FRONTEND]</span>
+										<span class="spec-fill" aria-hidden="true">・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・</span>
+										<span class="spec-tech">... etc.</span>
+										<span class="spec-date"> - 2026_ana</span>
+									</div>
+									<div class="spec-item">
+										<span class="spec-tag">[BACKEND]</span>
+										<span class="spec-fill" aria-hidden="true">・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・</span>
+										<span class="spec-tech">FastAPI, etc.</span>
+										<span class="spec-date"> - 2026_ana</span>
+									</div>
+									<div class="spec-item">
+										<span class="spec-tag">[INFRA]</span>
+										<span class="spec-fill" aria-hidden="true">・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・</span>
+										<span class="spec-tech">Docker, SQL, etc.</span>
+										<span class="spec-date"> - 2026_ana</span>
+									</div>
 								</div>
 							</div>
 						</div>
@@ -521,7 +582,7 @@
 		padding: 0 3rem 2rem;
 		max-width: 1100px;
 		box-sizing: border-box;
-		font-family: Menlo, Monaco, monospace;
+		font-family: 'SFMono-Terminal', 'IBM Plex Mono', Menlo, Monaco, Consolas, 'Courier New', monospace;
 		font-size: 13px;
 		font-weight: 400;
 		line-height: 1.25;
@@ -567,7 +628,7 @@
 
 	/* ── profile (anafetch) ── */
 	.anafetch-pre {
-		font-size: clamp(0.5rem, 1.1vw, 0.75rem);
+		font-size: clamp(0.38rem, 1.1vw, 0.75rem);
 		line-height: 1.2;
 		margin: 0;
 		padding-bottom: 1.5rem;
@@ -576,7 +637,7 @@
 	}
 	.logo-c {
 		color: #282828;
-		font-size: clamp(0.43rem, 1.2vw, 0.75rem);
+		font-size: clamp(0.36rem, 1.1vw, 0.75rem);
 		line-height: 1.111em;
 		letter-spacing: 0;
 		font-weight: 600;
@@ -612,15 +673,14 @@
 	#world {
 		display: inline-block;
 		transform-origin: center;
+		opacity: 0; /* JS가 1로 올림. style:font-size 디렉티브와 분리해야 resize 시 opacity 유지 */
 		-webkit-mask-image: radial-gradient(ellipse 90% 90% at 50% 50%, black 55%, transparent 90%);
 		mask-image: radial-gradient(ellipse 90% 90% at 50% 50%, black 55%, transparent 90%);
 	}
 	#world pre {
 		margin: 0;
-		
-		font-size: clamp(0.43rem, 1.2vw, 0.75rem);
 		line-height: 1.111em;
-		letter-spacing: -1;
+		letter-spacing: 0;
 		font-weight: 400;
 		color: #1a1a1a7a;
 	}
@@ -684,18 +744,58 @@
 	}
 
 	/* ── tech stack ── */
-	.nf-section { padding-bottom: 1.5rem; }
-	/* .nf-header {
-		font-weight: 700;
-		font-size: clamp(0.75rem, 1.8vw, 1rem);
-		color: #334882;
-		margin-bottom: 0.5rem;
-		border-left: 3px solid #334882;
-		padding-left: 0.6rem;
-	} */
-	.spec-list { display: flex; flex-direction: column; gap: 0.3rem; }
-	.spec-item { color: #333; }
-	.tag { color: #2e7d32; font-weight: 600; margin-right: 0.25rem; }
+	.nf-section {
+		padding-bottom: 1.5rem;
+		font-size: clamp(0.65rem, 1.4vw, 0.9rem);
+	}
+
+	/*
+	 * Grid container: 세 행의 컬럼이 한 번에 정렬됨
+	 * columns: [태그] [점 채움] [기술스택] [날짜]
+	 */
+	.spec-list {
+		display: grid;
+		grid-template-columns: auto minmax(0, 1fr) auto auto;
+		align-items: baseline;
+		row-gap: 0.3rem;
+		column-gap: 0.75ch;
+		overflow: hidden;
+		color: #333;
+	}
+	/* display: contents → spec-item 자체는 박스 없음, 자식 span이 grid cell이 됨 */
+	.spec-item { display: contents; }
+	.spec-tag {
+		color: #2e7d32;
+		font-weight: 600;
+		white-space: nowrap;
+	}
+	.spec-fill {
+		overflow: hidden;
+		white-space: nowrap;
+		min-width: 0;
+		opacity: 0.45;
+	}
+	.spec-tech { white-space: nowrap; }
+	.spec-date {
+		white-space: nowrap;
+		opacity: 0.5;
+	}
+
+	/* 모바일: grid → flex 전환, 점/날짜 숨김 */
+	@media (max-width: 640px) {
+		.spec-list {
+			display: flex;
+			flex-direction: column;
+			gap: 0.3rem;
+		}
+		.spec-item {
+			display: flex;
+			align-items: baseline;
+			gap: 0.5ch;
+		}
+		.spec-fill { display: none; }
+		.spec-date { display: none; }
+	}
 
 	/* ── 푸터 ── */
 	footer {
@@ -704,7 +804,7 @@
 		align-items: center;
 		padding: 2rem 3rem;
 		box-sizing: border-box;
-		font-size: 0.8rem;
+		font-size: clamp(0.7rem, 1.4vw, 0.85rem);
 		color: #888;
 		max-width: 1100px;
 		margin: 2rem auto 0;
@@ -722,6 +822,18 @@
 		cursor: pointer;
 	}
 	.footer-links button:hover { color: #333; }
+	@media (max-width: 640px) {
+		footer {
+			flex-direction: column;
+			align-items: flex-start;
+			gap: 0.75rem;
+			padding: 1.5rem 1.25rem;
+		}
+	}
+	@media (max-width: 430px) {
+		footer { padding: 1.25rem 0.75rem; }
+		.footer-links { gap: 1rem; }
+	}
 
 	/* ── 반응형 ── */
 	@media (max-width: 768px) {
