@@ -28,7 +28,8 @@
 		<style>
 			@font-face {
 				font-family: 'SFMono-Terminal';
-				src: url('/fonts/SFMono-Terminal.ttf') format('truetype');
+				src: url('/fonts/SFMono-Terminal.woff2') format('woff2'),
+				     url('/fonts/SFMono-Terminal.ttf') format('truetype');
 				font-weight: 400;
 				font-style: normal;
 				font-display: swap;
@@ -46,6 +47,9 @@
 				margin: 0;
 				background-color: #f9f9f9;
 				font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+				-webkit-font-smoothing: antialiased;
+				-moz-osx-font-smoothing: grayscale;
+				text-rendering: optimizeLegibility;
 			}
 		</style>
 	</head>

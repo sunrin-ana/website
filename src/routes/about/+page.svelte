@@ -14,14 +14,14 @@
 	const RAD_TO_DEG = 180 / Math.PI;
 
 	// 현재 폰트의 문자 가로/세로 비율을 측정해 X_ASPECT를 보정
-	function measureCharAspect(): number {
+	function measureCharAspect(px = 12): number {
 		if (typeof document === 'undefined') return 0.54;
 		const el = document.createElement('pre');
 		el.style.cssText = [
 			'position:fixed', 'top:-9999px', 'left:-9999px',
 			'visibility:hidden', 'pointer-events:none',
 			"font-family:'SFMono-Terminal','IBM Plex Mono',Menlo,Monaco,Consolas,'Courier New',monospace",
-			'font-size:0.75rem', 'line-height:1.111em', 'letter-spacing:0',
+			`font-size:${px}px`, 'line-height:1.111em', 'letter-spacing:0',
 			'white-space:pre', 'margin:0', 'padding:0'
 		].join(';');
 		el.textContent = 'X'.repeat(50) + '\n' + 'X'.repeat(50);
@@ -44,15 +44,76 @@
 	const LAND_MASK_BITS = decodeMaskBits(earthLandMask.data);
 
 	let resizeObserver: ResizeObserver | undefined;
+	let globeLayoutPass = 0;
 
-	function updateGlobeSize() {
+	function nextFrame() {
+		return new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+	}
+
+	async function loadAboutFonts() {
+		if (typeof document === 'undefined' || !('fonts' in document)) return;
+		await Promise.allSettled([
+			document.fonts.load("400 13px 'SFMono-Terminal'"),
+			document.fonts.load("700 13px 'JetBrains Mono'")
+		]);
+	}
+
+	function applyWorldMask(worldEl: HTMLElement, lineH: number) {
+		const maskR = Math.round(WORLD_RADIUS * lineH * 1.06);
+		const maskVal = `radial-gradient(circle ${maskR}px at 50% 50%, black 88%, transparent 100%)`;
+		worldEl.style.webkitMaskImage = maskVal;
+		worldEl.style.maskImage = maskVal;
+		worldEl.style.webkitMaskRepeat = 'no-repeat';
+		worldEl.style.maskRepeat = 'no-repeat';
+		worldEl.style.webkitMaskPosition = 'center';
+		worldEl.style.maskPosition = 'center';
+	}
+
+	async function updateGlobeSize() {
 		if (typeof document === 'undefined') return;
 		const stageEl = document.getElementById('world-stage');
 		const worldEl = document.getElementById('world');
 		if (!stageEl || !worldEl) return;
-		// Svelte reactive 시스템 없이 DOM 직접 조작 → 윈도우/맥 모두 동일하게 동작
+		const pass = ++globeLayoutPass;
 		const px = Math.max(4, Math.min(13.5, stageEl.clientWidth * 0.013));
 		worldEl.style.fontSize = px + 'px';
+		await tick();
+		await nextFrame();
+		if (pass !== globeLayoutPass) return;
+
+		const measureWorld = () => {
+			const { width, height } = worldEl.getBoundingClientRect();
+			if (width <= 0 || height <= 0) return null;
+			return {
+				aspect: (width / WORLD_COLS) / (height / WORLD_ROWS),
+				lineH: height / WORLD_ROWS
+			};
+		};
+
+		const firstPass = measureWorld();
+		if (!firstPass) return;
+
+		if (Math.abs(firstPass.aspect - X_ASPECT) > 0.0005) {
+			X_ASPECT = firstPass.aspect;
+			worldRows = buildWorldRows(worldPhase);
+			await tick();
+			await nextFrame();
+			if (pass !== globeLayoutPass) return;
+		}
+
+		const finalPass = measureWorld();
+		if (!finalPass) return;
+		applyWorldMask(worldEl, finalPass.lineH);
+
+		if (Math.abs(finalPass.aspect - X_ASPECT) > 0.0005) {
+			X_ASPECT = finalPass.aspect;
+			worldRows = buildWorldRows(worldPhase);
+			await tick();
+			await nextFrame();
+			if (pass !== globeLayoutPass) return;
+			const settledPass = measureWorld();
+			if (settledPass) applyWorldMask(worldEl, settledPass.lineH);
+		}
 	}
 
 	let showContent = false;
@@ -183,7 +244,7 @@
 		if (hours < 0) { hours += 24; days--; }
 		if (days < 0) { const p = new Date(now.getFullYear(), now.getMonth(), 0); days += p.getDate(); months--; }
 		if (months < 0) { months += 12; years--; }
-		return `${years} years, ${months} months, ${days} days, ${hours} hours, ${minutes} mins`;
+		return `${years} years, ${months} months, ${days} days`;
 	}
 
 	// ── 지구본 렌더링 ──
@@ -379,12 +440,14 @@
 		if (!allowReveal) return;
 		showContent = true;
 		await tick();
-		// DOM 생성 후 지구본 크기 계산 + 리사이즈 감지
-		updateGlobeSize();
+		await loadAboutFonts();
+		await updateGlobeSize();
 		resizeObserver?.disconnect();
 		const stageEl = document.getElementById('world-stage');
 		if (stageEl) {
-			resizeObserver = new ResizeObserver(() => updateGlobeSize());
+			resizeObserver = new ResizeObserver(() => {
+				void updateGlobeSize();
+			});
 			resizeObserver.observe(stageEl);
 		}
 		runSequence();
@@ -401,7 +464,8 @@
 		activeTimeouts = [];
 		worldPhase = 0.33 + Math.PI;
 
-		// 폰트 로드 완료 후 실제 문자 비율 측정 → 지구본 원형 보정
+		// about 페이지에서 쓰는 웹폰트를 먼저 강제로 로드해 초기 측정 오차를 막는다.
+		await loadAboutFonts();
 		await document.fonts.ready;
 		X_ASPECT = measureCharAspect();
 		worldRows = buildWorldRows(worldPhase);
@@ -421,6 +485,7 @@
 
 	onNavigate(() => {
 		allowReveal = false;
+		globeLayoutPass += 1;
 		clearInterval(activeInterval);
 		activeTimeouts.forEach(clearTimeout);
 		stopWorldSpin();
@@ -430,6 +495,7 @@
 
 	onDestroy(() => {
 		allowReveal = false;
+		globeLayoutPass += 1;
 		clearInterval(activeInterval);
 		activeTimeouts.forEach(clearTimeout);
 		stopWorldSpin();
@@ -479,7 +545,7 @@
 						</div>
 						<div class="term-content" style="opacity:0;transform:translateY(8px)">
 							<pre class="anafetch-pre">
-<span class="logo-c">               xMMMMMMMMN               </span>  <span class="info-key">ana</span>@<span class="info-key">sunrin</span>
+<span class="logo-c">               xMMMMMMMMN               </span>  <span class="info-key">sunrin</span>@<span class="info-key">ana</span>
 <span class="logo-c">              ,MMMMMMMMMMl              </span>  --------------------
 <span class="logo-c">             .WMMMMMMMMMMM'             </span>  <span class="info-key">OS</span>: Application &amp; Architecture 17 neurons
 <span class="logo-c">             NMMMMMMMMMMMMW.            </span>  <span class="info-key">Host</span>: Sunrin Internet High School Rev 121.0
@@ -607,6 +673,8 @@
 		text-align: center;
 		opacity: 0;
 		transform: scale(0.56);
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
 	}
 
 	/* ── 지구 줄 등장 틱 효과 ── */
@@ -618,17 +686,21 @@
 	}
 
 	/* ── 프롬프트 공통 색상 ── */
-	.p-user  { color: #2e7d32; font-weight: 800; letter-spacing: -1px;}
+	.p-user  { color: #2e7d32; font-weight: 700; letter-spacing: -1px; font-synthesis: weight; }
 	.p-sep   { color: #555; letter-spacing: -1px;}
-	.p-path  { color: #1565c0; font-weight: 700; }
+	.p-path  { color: #1565c0; font-weight: 700; font-synthesis: none; }
 	.p-dollar { color: #333; }
 	.blink { animation: blink 1s step-end infinite; }
 	@keyframes blink { 50% { opacity: 0; } }
 
 	/* ── profile (anafetch) ── */
 	.anafetch-pre {
-		font-size: clamp(0.38rem, 1.1vw, 0.75rem);
-		line-height: 1.2;
+		font-family: 'SFMono-Terminal', 'IBM Plex Mono', Menlo, Monaco, Consolas, 'Courier New', monospace;
+		font-size: clamp(0.46rem, 1.3vw, 0.9rem);
+		line-height: 1.111em;
+		letter-spacing: 0;
+		font-kerning: none;
+		font-synthesis: none;
 		margin: 0;
 		padding-bottom: 1.5rem;
 		color: #333;
@@ -636,12 +708,11 @@
 	}
 	.logo-c {
 		color: #282828;
-		font-size: clamp(0.36rem, 1.1vw, 0.75rem);
-		line-height: 1.111em;
 		letter-spacing: 0;
-		font-weight: 600;
+		font-weight: 400;
+		font-synthesis: none;
 	}
-	.info-key { color: hwb(183 26% 45%); font-weight: 900; letter-spacing: -1px; }
+	.info-key { color: hwb(183 26% 45%); font-weight: 700; letter-spacing: -1px; font-synthesis: weight; }
 	.effect { color: hsl(30, 100%, 35%); }
 	.pal-1 { color: #4e4e4e; }
 	.pal-2 { color: #cc3e3e; }
@@ -663,7 +734,11 @@
 	/* boot 커맨드 줄 */
 	.boot-prompt {
 		width: 100%;
+		font-family: 'SFMono-Terminal', 'IBM Plex Mono', Menlo, Monaco, Consolas, 'Courier New', monospace;
 		font-size: clamp(0.75rem, 1.8vw, 1rem);
+		letter-spacing: 0;
+		font-kerning: none;
+		font-synthesis: none;
 		margin-bottom: 1rem;
 		color: #333;
 	}
@@ -671,10 +746,12 @@
 	/* ── 지구본 ── */
 	#world {
 		display: inline-block;
+		font-family: 'SFMono-Terminal', 'IBM Plex Mono', Menlo, Monaco, Consolas, 'Courier New', monospace;
+		letter-spacing: 0;
+		font-kerning: none;
+		font-synthesis: none;
 		transform-origin: center;
 		opacity: 0; /* JS가 1로 올림. style:font-size 디렉티브와 분리해야 resize 시 opacity 유지 */
-		-webkit-mask-image: radial-gradient(ellipse 90% 90% at 50% 50%, black 55%, transparent 90%);
-		mask-image: radial-gradient(ellipse 90% 90% at 50% 50%, black 55%, transparent 90%);
 	}
 	#world pre {
 		margin: 0;
@@ -687,7 +764,11 @@
 	/* ── 링크 텍스트 ── */
 	#link {
 		margin: 1.2rem 0 0;
+		font-family: 'SFMono-Terminal', 'IBM Plex Mono', Menlo, Monaco, Consolas, 'Courier New', monospace;
 		font-size: clamp(0.7rem, 1.8vw, 0.95rem);
+		letter-spacing: 0;
+		font-kerning: none;
+		font-synthesis: weight;
 		line-height: 1.8;
 		color: #444;
 		text-align: left;
@@ -695,6 +776,7 @@
 	.link-line {
 		display: block;
 		white-space: pre;
+		font-weight: 700;
 	}
 
 	/* ── 터미널 바디 ── */
@@ -712,7 +794,11 @@
 	}
 
 	.type-prompt {
+		font-family: 'SFMono-Terminal', 'IBM Plex Mono', Menlo, Monaco, Consolas, 'Courier New', monospace;
 		font-size: clamp(0.75rem, 1.8vw, 1rem);
+		letter-spacing: 0;
+		font-kerning: none;
+		font-synthesis: none;
 		color: #555;
 		margin-bottom: 0.75rem;
 	}
@@ -721,6 +807,10 @@
 	#term-scroll {
 		width: 100%;
 		max-width: 100%;
+		font-family: 'SFMono-Terminal', 'IBM Plex Mono', Menlo, Monaco, Consolas, 'Courier New', monospace;
+		letter-spacing: 0;
+		font-kerning: none;
+		font-synthesis: none;
 		cursor: text;
 	}
 	.term-hidden-input {
@@ -734,7 +824,11 @@
 	.term-typed { white-space: pre; }
 	.term-cur { background: #333; color: #f5f5f5; }
 	.term-output {
+		font-family: 'SFMono-Terminal', 'IBM Plex Mono', Menlo, Monaco, Consolas, 'Courier New', monospace;
 		font-size: clamp(0.75rem, 1.8vw, 1rem);
+		letter-spacing: 0;
+		font-kerning: none;
+		font-synthesis: none;
 		color: #444;
 		margin-bottom: 0.75rem;
 		padding-left: 0.5rem;
@@ -744,8 +838,12 @@
 
 	/* ── tech stack ── */
 	.nf-section {
+		font-family: 'SFMono-Terminal', 'IBM Plex Mono', Menlo, Monaco, Consolas, 'Courier New', monospace;
 		padding-bottom: 1.5rem;
 		font-size: clamp(0.65rem, 1.4vw, 0.9rem);
+		letter-spacing: 0;
+		font-kerning: none;
+		font-synthesis: none;
 	}
 
 	/*
@@ -754,10 +852,14 @@
 	 */
 	.spec-list {
 		display: grid;
+		font-family: 'SFMono-Terminal', 'IBM Plex Mono', Menlo, Monaco, Consolas, 'Courier New', monospace;
 		grid-template-columns: auto minmax(0, 1fr) auto auto;
 		align-items: baseline;
 		row-gap: 0.3rem;
 		column-gap: 0.75ch;
+		letter-spacing: 0;
+		font-kerning: none;
+		font-synthesis: none;
 		overflow: hidden;
 		color: #333;
 	}
@@ -766,6 +868,7 @@
 	.spec-tag {
 		color: #2e7d32;
 		font-weight: 600;
+		font-synthesis: none;
 		white-space: nowrap;
 	}
 	.spec-fill {
@@ -849,5 +952,5 @@
 <svelte:head>
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
-	<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;700&display=swap" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;700&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
 </svelte:head>
