@@ -14,14 +14,14 @@
 	const RAD_TO_DEG = 180 / Math.PI;
 
 	// 현재 폰트의 문자 가로/세로 비율을 측정해 X_ASPECT를 보정
-	function measureCharAspect(px = 12): number {
+	function measureCharAspect(): number {
 		if (typeof document === 'undefined') return 0.54;
 		const el = document.createElement('pre');
 		el.style.cssText = [
 			'position:fixed', 'top:-9999px', 'left:-9999px',
 			'visibility:hidden', 'pointer-events:none',
 			"font-family:'SFMono-Terminal','IBM Plex Mono',Menlo,Monaco,Consolas,'Courier New',monospace",
-			`font-size:${px}px`, 'line-height:1.111em', 'letter-spacing:0',
+			'font-size:0.75rem', 'line-height:1.111em', 'letter-spacing:0',
 			'white-space:pre', 'margin:0', 'padding:0'
 		].join(';');
 		el.textContent = 'X'.repeat(50) + '\n' + 'X'.repeat(50);
@@ -44,76 +44,15 @@
 	const LAND_MASK_BITS = decodeMaskBits(earthLandMask.data);
 
 	let resizeObserver: ResizeObserver | undefined;
-	let globeLayoutPass = 0;
 
-	function nextFrame() {
-		return new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
-	}
-
-	async function loadAboutFonts() {
-		if (typeof document === 'undefined' || !('fonts' in document)) return;
-		await Promise.allSettled([
-			document.fonts.load("400 13px 'SFMono-Terminal'"),
-			document.fonts.load("700 13px 'JetBrains Mono'")
-		]);
-	}
-
-	function applyWorldMask(worldEl: HTMLElement, lineH: number) {
-		const maskR = Math.round(WORLD_RADIUS * lineH * 1.06);
-		const maskVal = `radial-gradient(circle ${maskR}px at 50% 50%, black 88%, transparent 100%)`;
-		worldEl.style.webkitMaskImage = maskVal;
-		worldEl.style.maskImage = maskVal;
-		worldEl.style.webkitMaskRepeat = 'no-repeat';
-		worldEl.style.maskRepeat = 'no-repeat';
-		worldEl.style.webkitMaskPosition = 'center';
-		worldEl.style.maskPosition = 'center';
-	}
-
-	async function updateGlobeSize() {
+	function updateGlobeSize() {
 		if (typeof document === 'undefined') return;
 		const stageEl = document.getElementById('world-stage');
 		const worldEl = document.getElementById('world');
 		if (!stageEl || !worldEl) return;
-		const pass = ++globeLayoutPass;
+		// Svelte reactive 시스템 없이 DOM 직접 조작 → 윈도우/맥 모두 동일하게 동작
 		const px = Math.max(4, Math.min(13.5, stageEl.clientWidth * 0.013));
 		worldEl.style.fontSize = px + 'px';
-		await tick();
-		await nextFrame();
-		if (pass !== globeLayoutPass) return;
-
-		const measureWorld = () => {
-			const { width, height } = worldEl.getBoundingClientRect();
-			if (width <= 0 || height <= 0) return null;
-			return {
-				aspect: (width / WORLD_COLS) / (height / WORLD_ROWS),
-				lineH: height / WORLD_ROWS
-			};
-		};
-
-		const firstPass = measureWorld();
-		if (!firstPass) return;
-
-		if (Math.abs(firstPass.aspect - X_ASPECT) > 0.0005) {
-			X_ASPECT = firstPass.aspect;
-			worldRows = buildWorldRows(worldPhase);
-			await tick();
-			await nextFrame();
-			if (pass !== globeLayoutPass) return;
-		}
-
-		const finalPass = measureWorld();
-		if (!finalPass) return;
-		applyWorldMask(worldEl, finalPass.lineH);
-
-		if (Math.abs(finalPass.aspect - X_ASPECT) > 0.0005) {
-			X_ASPECT = finalPass.aspect;
-			worldRows = buildWorldRows(worldPhase);
-			await tick();
-			await nextFrame();
-			if (pass !== globeLayoutPass) return;
-			const settledPass = measureWorld();
-			if (settledPass) applyWorldMask(worldEl, settledPass.lineH);
-		}
 	}
 
 	let showContent = false;
@@ -121,12 +60,12 @@
 
 	// ── 인터랙티브 터미널 ──
 	let termInput = '';
-	let termHistory: { cmd: string; lines: string[] }[] = [];
+	let termHistory: { cmd: string; lines: string[]; art?: boolean }[] = [];
 	let termInputEl: HTMLInputElement;
 	let cursorPos = 0;
 
-	const COMMANDS: Record<string, string[]> = {
-		'help': [
+	const COMMANDS: Record<string, { lines: string[]; art?: boolean }> = {
+		'help': { lines: [
 			'usage: <command> [args]',
 			'',
 			'  ls -al                    디렉토리 목록',
@@ -137,8 +76,8 @@
 			'  cat ./contact.json        연락처',
 			'  whoami                    현재 사용자',
 			'  clear                     터미널 초기화',
-		],
-		'ls -al': [
+		]},
+		'ls -al': { lines: [
 			'total 48',
 			'drwxr-xr-x  6 ana  sunrin   192 Mar  1 00:00 ./',
 			'drwxr-xr-x  3 ana  sunrin    96 Mar  1 00:00 ../',
@@ -146,8 +85,8 @@
 			'drwxr-xr-x  8 ana  sunrin   256 Jan 15 12:34 projects/',
 			'-rw-r--r--  1 ana  sunrin  1024 Mar  1 00:00 contact.json',
 			'-rwxr-xr-x  1 ana  sunrin   512 Mar 17 12:30 apply.sh',
-		],
-		'cat ./ana/members.txt': [
+		]},
+		'cat ./ana/members.txt': { lines: [
 			'총 부원 수: 약 30명',
 			'',
 			'1학년  ██████████  신입 부원',
@@ -155,32 +94,32 @@
 			'3학년  ██████      선배 / 멘토',
 			'',
 			'── 모집: 매년 3월 ──',
-		],
-		'git log --oneline': [
+		]},
+		'git log --oneline': { lines: [
 			'a3f1c2e (HEAD) 웹사이트 v2 리디자인 — 2025',
 			'b7d4e91 웹사이트 v1 런칭 — 2023',
 			'c2a9f03 GitHub 오픈소스 활동 시작 — 2021',
 			'e8b1d74 AnAlog 프로젝트 시작 — 2017',
 			'0000001 (origin) 동아리 창설 — 2011',
-		],
-		'cat ./ana/motto.txt': [
+		]},
+		'cat ./ana/motto.txt': { lines: [
 			'',
 			'  "코드로 세상을 연결한다"',
 			'',
 			'  Application  — 무언가를 만드는 것',
 			'  Architecture — 구조를 설계하는 것',
 			'',
-		],
-		'cat ./contact.json': [
+		]},
+		'cat ./contact.json': { lines: [
 			'{',
 			'  "email":     "ana@sunrint.hs.kr",',
 			'  "instagram": "@sunrin_ana",',
 			'  "github":    "github.com/sunrin-ana",',
 			'  "facebook":  "fb.com/sunrinana"',
 			'}',
-		],
-		'whoami': ['guest — 방문자 모드로 접속 중 (read-only)'],
-		'cat ./easteregg/readme.md': [
+		]},
+		'whoami': { lines: ['guest — 방문자 모드로 접속 중 (read-only)'] },
+		'cat ./easteregg/readme.md': { art: true, lines: [
 			'',
 			'          ██╗    ██╗███████╗██╗      ██████╗ ██████╗ ███╗   ███╗███████╗',
 			'          ██║    ██║██╔════╝██║     ██╔════╝██╔═══██╗████╗ ████║██╔════╝',
@@ -195,15 +134,16 @@
 			'',
 			'',
 			'  enter "usage: <command> [args]" or "help"'
-
-		],
+		]},
 	};
 
 	function execCommand(raw: string) {
 		const cmd = raw.trim().toLowerCase();
 		if (cmd === 'clear') { termHistory = []; return; }
-		const lines = COMMANDS[cmd] ?? [`command not found: ${raw} — 'help'를 입력해보세요.`];
-		termHistory = [...termHistory, { cmd: raw, lines }];
+		const entry = COMMANDS[cmd];
+		const lines = entry?.lines ?? [`command not found: ${raw} — 'help'를 입력해보세요.`];
+		const art = entry?.art ?? false;
+		termHistory = [...termHistory, { cmd: raw, lines, art }];
 		tick().then(() => {
 			const el = document.querySelector('#term-scroll');
 			if (el) el.scrollTop = el.scrollHeight;
@@ -244,7 +184,7 @@
 		if (hours < 0) { hours += 24; days--; }
 		if (days < 0) { const p = new Date(now.getFullYear(), now.getMonth(), 0); days += p.getDate(); months--; }
 		if (months < 0) { months += 12; years--; }
-		return `${years} years, ${months} months, ${days} days`;
+		return `${years} years, ${months} months, ${days} days, ${hours} hours, ${minutes} mins`;
 	}
 
 	// ── 지구본 렌더링 ──
@@ -440,14 +380,12 @@
 		if (!allowReveal) return;
 		showContent = true;
 		await tick();
-		await loadAboutFonts();
-		await updateGlobeSize();
+		// DOM 생성 후 지구본 크기 계산 + 리사이즈 감지
+		updateGlobeSize();
 		resizeObserver?.disconnect();
 		const stageEl = document.getElementById('world-stage');
 		if (stageEl) {
-			resizeObserver = new ResizeObserver(() => {
-				void updateGlobeSize();
-			});
+			resizeObserver = new ResizeObserver(() => updateGlobeSize());
 			resizeObserver.observe(stageEl);
 		}
 		runSequence();
@@ -464,8 +402,7 @@
 		activeTimeouts = [];
 		worldPhase = 0.33 + Math.PI;
 
-		// about 페이지에서 쓰는 웹폰트를 먼저 강제로 로드해 초기 측정 오차를 막는다.
-		await loadAboutFonts();
+		// 폰트 로드 완료 후 실제 문자 비율 측정 → 지구본 원형 보정
 		await document.fonts.ready;
 		X_ASPECT = measureCharAspect();
 		worldRows = buildWorldRows(worldPhase);
@@ -485,7 +422,6 @@
 
 	onNavigate(() => {
 		allowReveal = false;
-		globeLayoutPass += 1;
 		clearInterval(activeInterval);
 		activeTimeouts.forEach(clearTimeout);
 		stopWorldSpin();
@@ -495,7 +431,6 @@
 
 	onDestroy(() => {
 		allowReveal = false;
-		globeLayoutPass += 1;
 		clearInterval(activeInterval);
 		activeTimeouts.forEach(clearTimeout);
 		stopWorldSpin();
@@ -545,7 +480,7 @@
 						</div>
 						<div class="term-content" style="opacity:0;transform:translateY(8px)">
 							<pre class="anafetch-pre">
-<span class="logo-c">               xMMMMMMMMN               </span>  <span class="info-key">sunrin</span>@<span class="info-key">ana</span>
+<span class="logo-c">               xMMMMMMMMN               </span>  <span class="info-key">ana</span>@<span class="info-key">sunrin</span>
 <span class="logo-c">              ,MMMMMMMMMMl              </span>  --------------------
 <span class="logo-c">             .WMMMMMMMMMMM'             </span>  <span class="info-key">OS</span>: Application &amp; Architecture 17 neurons
 <span class="logo-c">             NMMMMMMMMMMMMW.            </span>  <span class="info-key">Host</span>: Sunrin Internet High School Rev 121.0
@@ -606,7 +541,7 @@
 							<div class="type-prompt">
 								<span class="p-user">sunrin@ana</span><span class="p-sep">:</span><span class="p-path">~</span><span class="p-dollar">$</span>&nbsp;{entry.cmd}
 							</div>
-							<div class="term-output">
+							<div class="term-output" class:art={entry.art}>
 								{#each entry.lines as line}
 									<div>{line}</div>
 								{/each}
@@ -673,8 +608,6 @@
 		text-align: center;
 		opacity: 0;
 		transform: scale(0.56);
-		-webkit-font-smoothing: antialiased;
-		-moz-osx-font-smoothing: grayscale;
 	}
 
 	/* ── 지구 줄 등장 틱 효과 ── */
@@ -686,21 +619,17 @@
 	}
 
 	/* ── 프롬프트 공통 색상 ── */
-	.p-user  { color: #2e7d32; font-weight: 700; letter-spacing: -1px; font-synthesis: weight; }
+	.p-user  { color: #2e7d32; font-weight: 800; letter-spacing: -1px;}
 	.p-sep   { color: #555; letter-spacing: -1px;}
-	.p-path  { color: #1565c0; font-weight: 700; font-synthesis: none; }
+	.p-path  { color: #1565c0; font-weight: 700; }
 	.p-dollar { color: #333; }
 	.blink { animation: blink 1s step-end infinite; }
 	@keyframes blink { 50% { opacity: 0; } }
 
 	/* ── profile (anafetch) ── */
 	.anafetch-pre {
-		font-family: 'SFMono-Terminal', 'IBM Plex Mono', Menlo, Monaco, Consolas, 'Courier New', monospace;
-		font-size: clamp(0.46rem, 1.3vw, 0.9rem);
-		line-height: 1.111em;
-		letter-spacing: 0;
-		font-kerning: none;
-		font-synthesis: none;
+		font-size: clamp(0.38rem, 1.1vw, 0.75rem);
+		line-height: 1.2;
 		margin: 0;
 		padding-bottom: 1.5rem;
 		color: #333;
@@ -708,11 +637,12 @@
 	}
 	.logo-c {
 		color: #282828;
+		font-size: clamp(0.36rem, 1.1vw, 0.75rem);
+		line-height: 1.111em;
 		letter-spacing: 0;
-		font-weight: 400;
-		font-synthesis: none;
+		font-weight: 600;
 	}
-	.info-key { color: hwb(183 26% 45%); font-weight: 700; letter-spacing: -1px; font-synthesis: weight; }
+	.info-key { color: hwb(183 26% 45%); font-weight: 900; letter-spacing: -1px; }
 	.effect { color: hsl(30, 100%, 35%); }
 	.pal-1 { color: #4e4e4e; }
 	.pal-2 { color: #cc3e3e; }
@@ -734,11 +664,7 @@
 	/* boot 커맨드 줄 */
 	.boot-prompt {
 		width: 100%;
-		font-family: 'SFMono-Terminal', 'IBM Plex Mono', Menlo, Monaco, Consolas, 'Courier New', monospace;
 		font-size: clamp(0.75rem, 1.8vw, 1rem);
-		letter-spacing: 0;
-		font-kerning: none;
-		font-synthesis: none;
 		margin-bottom: 1rem;
 		color: #333;
 	}
@@ -746,12 +672,10 @@
 	/* ── 지구본 ── */
 	#world {
 		display: inline-block;
-		font-family: 'SFMono-Terminal', 'IBM Plex Mono', Menlo, Monaco, Consolas, 'Courier New', monospace;
-		letter-spacing: 0;
-		font-kerning: none;
-		font-synthesis: none;
 		transform-origin: center;
 		opacity: 0; /* JS가 1로 올림. style:font-size 디렉티브와 분리해야 resize 시 opacity 유지 */
+		-webkit-mask-image: radial-gradient(ellipse 90% 90% at 50% 50%, black 55%, transparent 90%);
+		mask-image: radial-gradient(ellipse 90% 90% at 50% 50%, black 55%, transparent 90%);
 	}
 	#world pre {
 		margin: 0;
@@ -764,11 +688,7 @@
 	/* ── 링크 텍스트 ── */
 	#link {
 		margin: 1.2rem 0 0;
-		font-family: 'SFMono-Terminal', 'IBM Plex Mono', Menlo, Monaco, Consolas, 'Courier New', monospace;
 		font-size: clamp(0.7rem, 1.8vw, 0.95rem);
-		letter-spacing: 0;
-		font-kerning: none;
-		font-synthesis: weight;
 		line-height: 1.8;
 		color: #444;
 		text-align: left;
@@ -776,7 +696,6 @@
 	.link-line {
 		display: block;
 		white-space: pre;
-		font-weight: 700;
 	}
 
 	/* ── 터미널 바디 ── */
@@ -794,11 +713,7 @@
 	}
 
 	.type-prompt {
-		font-family: 'SFMono-Terminal', 'IBM Plex Mono', Menlo, Monaco, Consolas, 'Courier New', monospace;
 		font-size: clamp(0.75rem, 1.8vw, 1rem);
-		letter-spacing: 0;
-		font-kerning: none;
-		font-synthesis: none;
 		color: #555;
 		margin-bottom: 0.75rem;
 	}
@@ -807,10 +722,6 @@
 	#term-scroll {
 		width: 100%;
 		max-width: 100%;
-		font-family: 'SFMono-Terminal', 'IBM Plex Mono', Menlo, Monaco, Consolas, 'Courier New', monospace;
-		letter-spacing: 0;
-		font-kerning: none;
-		font-synthesis: none;
 		cursor: text;
 	}
 	.term-hidden-input {
@@ -824,26 +735,28 @@
 	.term-typed { white-space: pre; }
 	.term-cur { background: #333; color: #f5f5f5; }
 	.term-output {
-		font-family: 'SFMono-Terminal', 'IBM Plex Mono', Menlo, Monaco, Consolas, 'Courier New', monospace;
 		font-size: clamp(0.75rem, 1.8vw, 1rem);
-		letter-spacing: 0;
-		font-kerning: none;
-		font-synthesis: none;
 		color: #444;
 		margin-bottom: 0.75rem;
 		padding-left: 0.5rem;
 		border-left: 2px solid #ddd;
 		line-height: 1.6;
 	}
+	/* 박스 드로잉 아트: line-height 1 필수, 공백 보존, 박스문자 지원 폰트 */
+	.term-output.art {
+		line-height: 1;
+		white-space: pre;
+		font-family: 'IBM Plex Mono', Menlo, Consolas, 'Courier New', monospace;
+		font-size: clamp(0.45rem, 0.9vw, 0.65rem);
+		overflow-x: auto;
+		border-left: none;
+		padding-left: 0;
+	}
 
 	/* ── tech stack ── */
 	.nf-section {
-		font-family: 'SFMono-Terminal', 'IBM Plex Mono', Menlo, Monaco, Consolas, 'Courier New', monospace;
 		padding-bottom: 1.5rem;
 		font-size: clamp(0.65rem, 1.4vw, 0.9rem);
-		letter-spacing: 0;
-		font-kerning: none;
-		font-synthesis: none;
 	}
 
 	/*
@@ -852,14 +765,10 @@
 	 */
 	.spec-list {
 		display: grid;
-		font-family: 'SFMono-Terminal', 'IBM Plex Mono', Menlo, Monaco, Consolas, 'Courier New', monospace;
 		grid-template-columns: auto minmax(0, 1fr) auto auto;
 		align-items: baseline;
 		row-gap: 0.3rem;
 		column-gap: 0.75ch;
-		letter-spacing: 0;
-		font-kerning: none;
-		font-synthesis: none;
 		overflow: hidden;
 		color: #333;
 	}
@@ -868,7 +777,6 @@
 	.spec-tag {
 		color: #2e7d32;
 		font-weight: 600;
-		font-synthesis: none;
 		white-space: nowrap;
 	}
 	.spec-fill {
@@ -952,5 +860,5 @@
 <svelte:head>
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
-	<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;700&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;700&display=swap" rel="stylesheet">
 </svelte:head>
