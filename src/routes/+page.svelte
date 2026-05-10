@@ -9,11 +9,9 @@
 <main>
     <Halftone />
 	<p id=hero>
-		새로운 도약과 함께 성장하는 <button
+		새로운 도약과 함께 성장하는 <span
 		class="cp"
-		type="button"
-		on:click={() => {goto("/anafetch")}}
-	>AnA</button><br/>
+	>AnA</span><br/>
 		<strong>Application & Architecture</strong>
 	</p>
 </main>

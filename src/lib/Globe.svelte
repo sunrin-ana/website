@@ -167,13 +167,12 @@
 		opacity: 0;
 		-webkit-mask-image: radial-gradient(ellipse 90% 90% at 50% 50%, black 55%, transparent 90%);
 		mask-image: radial-gradient(ellipse 90% 90% at 50% 50%, black 55%, transparent 90%);
-		font-family: 'SFMono-Terminal', 'IBM Plex Mono', Menlo, Monaco, Consolas, 'Courier New', monospace;
 	}
 	#world pre {
 		margin: 0;
 		line-height: 1.111em;
 		letter-spacing: 0;
-		font-weight: 400;
+		font-weight: 800;
 		color: #1a1a1a7a;
 	}
 </style>

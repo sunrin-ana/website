@@ -207,11 +207,11 @@
 
 				<div id="terminal-body">
 					<div class="term-step">
-						<div class="type-prompt" data-cmd="./profile --view" style="opacity:0">
+						<div class="type-prompt" data-cmd="anafetch" style="opacity:0">
 							<span class="p-user">sunrin@ana</span><span class="p-sep">:</span><span class="p-path">~</span><span class="p-dollar">$</span>&nbsp;<span class="prompt-typed"></span><span class="prompt-cur blink">_</span>
 						</div>
 						<div class="term-content" style="opacity:0;transform:translateY(8px)">
-							<AnaFetch {uptimeString} />
+							<AnaFetch {uptimeString} hidePrompt={true} />
 						</div>
 					</div>
 
@@ -257,9 +257,8 @@
 	#intro-title {
 		margin: 0;
 		font-size: clamp(2.5rem, 9vw, 6.4rem);
-		font-family: "JetBrains Mono", monospace;
 		font-weight: 800;
-		letter-spacing: -0.01em;
+		letter-spacing: 0.08em;
 		text-align: center;
 		opacity: 0;
 		transform: scale(0.56);
