@@ -7,7 +7,7 @@
 		<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-dynamic-subset.min.css" />
 		<!-- HTML Meta Tags -->
 		<title>AnA</title>
-		<meta name="description" content="새로운 도약과 함께 성장하는 Application & Architecture">
+		<meta name="description" content="새로운 도약과 함께 성장하는 Application & Architecture, AnA">
 
 		<!-- Facebook Meta Tags -->
 		<meta property="og:url" content="https://ana.st">
@@ -26,14 +26,12 @@
 		
 		%sveltekit.head%
 		<style>
-			body {
-				padding: 0;
-				margin: 0;
-				background-color: #f9f9f9;
-			}
-
-			* {
-				font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+			@font-face {
+				font-family: 'SFMono-Terminal';
+				src: url('/fonts/SFMono-Terminal.ttf') format('truetype');
+				font-weight: 400;
+				font-style: normal;
+				font-display: swap;
 			}
 
 			@font-face {
@@ -41,6 +39,13 @@
 				src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_six@1.2/DungGeunMo.woff') format('woff');
 				font-weight: normal;
 				font-display: swap;
+			}
+
+			body {
+				padding: 0;
+				margin: 0;
+				background-color: #f9f9f9;
+				font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
 			}
 		</style>
 	</head>

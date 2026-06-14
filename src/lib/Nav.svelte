@@ -136,12 +136,13 @@
 		position: fixed;
 		top: 0;
 		width: 100%;
+		box-sizing: border-box;
 		display: flex;
 		flex-direction: row;
 		align-items: center;
 		padding: 1.5rem 3rem;
 		z-index: 100;
-        background-color: #f9f9f9;
+		background-color: #f9f9f9;
 	}
 
 	.logo-image {
@@ -166,10 +167,10 @@
 	.navbar-menu {
 		display: flex;
 		flex-direction: row;
-		margin-left: 3rem;
-		width: calc(100% - 13rem);
+		flex: 1;
+		margin-left: 2.5rem;
 		align-items: center;
-        background-color: #f9f9f9;
+		background-color: #f9f9f9;
 	}
 
 	.navbar-menu-items {
@@ -240,6 +241,11 @@
 		border: 0;
 		background: transparent;
 		padding: 0;
+	}
+
+	@media (max-width: 1024px) {
+		.navbar-container { padding: 1.5rem 1.5rem; }
+		.navbar-menu-items { gap: 0.75rem; }
 	}
 
 	/* Responsive Mobile Styles */
