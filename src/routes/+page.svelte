@@ -1,45 +1,55 @@
-<script>
-	import Halftone from "$lib/Halftone.svelte";
-	import Nav from "$lib/Nav.svelte";
-	import { goto } from '$app/navigation';
+<script lang="ts">
+	import Nav from '$lib/Nav.svelte';
+	import LogoDots from '$lib/LogoDots.svelte';
 </script>
 
-<Nav></Nav>
+<svelte:head>
+	<title>AnA</title>
+</svelte:head>
+
+<Nav />
 
 <main>
-    <Halftone />
-	<p id=hero>
-		새로운 도약과 함께 성장하는 <span
-		class="cp"
-	>AnA</span><br/>
-		<strong>Application & Architecture</strong>
+	<div class="mark">
+		<LogoDots />
+	</div>
+	<p class="hero">
+		새로운 도약과 함께 성장하는 <span class="ana">AnA</span><br />
+		<strong>Application &amp; Architecture</strong>
 	</p>
 </main>
 
 <style>
 	main {
 		display: flex;
-
-		flex-flow: column;
-		justify-content: center;
+		flex-direction: column;
 		align-items: center;
-
-		width: 100%;
-		height: 100vh;
+		justify-content: center;
+		min-height: 100svh;
+		padding: var(--nav-h) 24px 0;
+		background: var(--surface);
 	}
-
-	#hero {
+	.mark {
+		width: clamp(240px, 46vmin, 420px);
+		margin-bottom: clamp(8px, 2vh, 24px);
+	}
+	.hero {
+		margin: 0;
 		text-align: center;
 		font-size: 1.5rem;
+		line-height: 1.5;
+		letter-spacing: -0.02em;
 	}
-
-	.cp {
-		color: #334882;
-		border: 0;
-		background: transparent;
-		padding: 0;
-		margin: 0;
-		font: inherit;
-		font-weight: 700;
+	.ana {
+		color: var(--brand-ink);
+		font-weight: 600;
+	}
+	strong {
+		font-weight: 600;
+	}
+	@media (max-width: 640px) {
+		.hero {
+			font-size: 1.2rem;
+		}
 	}
 </style>

@@ -1,336 +1,490 @@
 <script lang="ts">
+	// Header modelled on cloudflare.com: transparent, full-width bar with the menu
+	// centred. Once the page scrolls, everything except the mark and the CTA fades
+	// away so only those two float over the content.
 	import Fa from 'svelte-fa';
-	import { faFacebook, faInstagram, faGithub } from '@fortawesome/free-brands-svg-icons';
-	import { goto } from '$app/navigation';
+	import { faInstagram, faGithub, faFacebook } from '@fortawesome/free-brands-svg-icons';
+	import { onMount } from 'svelte';
+	import { page } from '$app/state';
 
-	let isOpen = false;
+	let isOpen = $state(false);
+	let scrolled = $state(false);
+	let burger: HTMLButtonElement;
+	let sheet: HTMLDivElement;
+	let brandEl: HTMLAnchorElement;
+	let ctaEl: HTMLButtonElement;
 
-	const screens = ['About', 'Curriculum'] as const;
-	const pages = ['AnAlog', 'Solve', 'Join'] as const;
-	type PageName = (typeof pages)[number];
+	// pages restored mid-scroll (reload, #hash) start in the right state
+	onMount(() => {
+		scrolled = window.scrollY > 64;
+	});
 
-	const toggleMenu = () => {
-		isOpen = !isOpen;
+	// never hide the CTA while it holds keyboard focus
+	$effect(() => {
+		if (!scrolled && ctaEl && document.activeElement === ctaEl) brandEl?.focus();
+	});
+
+	type Item = { label: string; href?: string; soon?: boolean; external?: boolean };
+
+	const items: Item[] = [
+		{ label: 'About', href: '/about' },
+		{ label: 'Archives', href: '/archives' },
+		{ label: 'Curriculum', href: '/curriculum' },
+		{ label: 'AnAlog', soon: true, external: true },
+		{ label: 'Solve', soon: true, external: true }
+	];
+
+	const isActive = (href?: string) => !!href && page.url.pathname.startsWith(href);
+
+	function close() {
+		const hadFocus = sheet?.contains(document.activeElement);
+		isOpen = false;
+		if (hadFocus) burger?.focus();
+	}
+
+	$effect(() => {
+		if (!isOpen) return;
+		const root = document.documentElement;
+		const prev = root.style.overflow;
+		root.style.overflow = 'hidden';
+		const behind = [...document.querySelectorAll('body main, body footer')] as HTMLElement[];
+		behind.forEach((el) => (el.inert = true));
+		return () => {
+			root.style.overflow = prev;
+			behind.forEach((el) => (el.inert = false));
+		};
+	});
+
+	function soon(item: Item) {
+		close();
+		alert(`${item.label} 페이지는 현재 작업 중에 있습니다! 조금만 기다려주세요!`);
+	}
+
+	function join() {
+		close();
+		const now = Date.now();
+		const start = new Date('2026-03-17T12:30:00').getTime();
+		const end = new Date('2026-03-19T22:00:00').getTime();
+		if (now < start) return alert('지금은 지원 기간이 아닙니다!');
+		if (now > end) return alert('지원이 마감되었습니다.');
+		window.location.href = 'https://apply.ana.st/';
+	}
+
+	// hysteresis so the bar doesn't flicker around the threshold
+	let ticking = false;
+	const onScroll = () => {
+		if (ticking) return;
+		ticking = true;
+		requestAnimationFrame(() => {
+			ticking = false;
+			const y = window.scrollY;
+			if (!scrolled && y > 64) scrolled = true;
+			else if (scrolled && y < 24) scrolled = false;
+		});
 	};
-
-	const needToWorkOn = (page: PageName) => {
-		if (page === 'Join') {
-			const now = new Date();
-			const start = new Date('2026-03-17T12:30:00');
-			const end = new Date('2026-03-19T22:00:00');
-			const diff = end.getTime() - now.getTime();
-			const startDiff = start.getTime() - now.getTime();
-
-			if (startDiff > 0) {
-				alert('지금은 지원 기간이 아닙니다!')
-				return
-			}
-			else if (diff < 0) {
-				alert('지원이 마감되었습니다.')
-				return
-			}
-			window.location.href = "https://apply.ana.st/"
-			return;
-		}
-		alert(`${page} 페이지는 현재 작업 중에 있습니다! 조금만 기다려주세요!`);
-	};
-
-	const handleResize = () => {
-		if (window.innerWidth > 768) {
-			isOpen = false;
-		}
+	const onResize = () => {
+		if (window.innerWidth > 860) isOpen = false;
 	};
 </script>
 
-<svelte:window on:resize={handleResize} />
+<svelte:window
+	onscroll={onScroll}
+	onresize={onResize}
+	onkeydown={(e) => {
+		if (e.key === 'Escape' && isOpen) close();
+	}}
+/>
 
-<div class="navbar-container">
-	<button class="logo-button" on:click={() => goto('/')} aria-label="Go to home">
-		<img class="logo-image" src="/logo.svg" alt="logo" />
-	</button>
+<header class="nav" class:scrolled class:open={isOpen}>
+	<div class="bar">
+		<a class="brand" bind:this={brandEl} href="/" aria-label="AnA 홈" onclick={() => (isOpen = false)}>
+			<img class="mark" src="/logo.svg" alt="" width="30" height="30" />
+		</a>
 
-	<button
-		class="hamburger-icon"
-		on:click={toggleMenu}
-		class:open={isOpen}
-		type="button"
-		aria-label="Toggle menu"
-		aria-expanded={isOpen}
-	>
-		<svg xmlns="http://www.w3.org/2000/svg" width="20" height="16" viewBox="0 0 20 16" fill="none">
-			<path d="M2 2L18 2" stroke="black" stroke-width="3" stroke-linecap="round" />
-			<path d="M2 8L18 8" stroke="black" stroke-width="3" stroke-linecap="round" />
-			<path d="M2 14H18" stroke="black" stroke-width="3" stroke-linecap="round" />
-		</svg>
-	</button>
-
-	<div class="navbar-menu" class:open={isOpen}>
-		<div class="navbar-menu-items">
-			{#each screens as screen, i}
-				<button
-					class="navbar-menu-item"
-					on:click={() => {if (screen === 'Curriculum') alert("페이지는 현재 작업 중에 있습니다."); else goto("/"+screen.toLowerCase())}}
-					style="--delay-index: {i}"
-					type="button"
-				>
-					{screen}
-				</button>
+		<nav class="menu fade" aria-label="Main">
+			{#each items as item}
+				{#if item.href}
+					<a class="item" href={item.href} aria-current={isActive(item.href) ? 'page' : undefined}>{item.label}</a>
+				{:else}
+					<button class="item" type="button" onclick={() => soon(item)}>
+						{item.label}{#if item.external}<span class="ext" aria-hidden="true">↗</span>{/if}
+					</button>
+				{/if}
 			{/each}
-			{#each pages as page, i}
-				<button
-					class="navbar-menu-item"
-					on:click={() => needToWorkOn(page)}
-					style="--delay-index: {i + screens.length}"
-					type="button"
-				>
-					{page}↗
-				</button>
-			{/each}
-		</div>
+		</nav>
 
-		<div class="navbar-icons">
+		<div class="right">
+			<div class="pills fade">
+				<a class="pill round" style="--k:0" href="https://github.com/sunrin-ana" target="_blank" rel="noopener" aria-label="GitHub">
+					<Fa icon={faGithub} />
+				</a>
+				<a class="pill round" style="--k:1" href="https://instagram.com/sunrin_ana" target="_blank" rel="noopener" aria-label="Instagram">
+					<Fa icon={faInstagram} />
+				</a>
+				<a class="pill round" style="--k:2" href="https://www.facebook.com/sunrinana/" target="_blank" rel="noopener" aria-label="Facebook">
+					<Fa icon={faFacebook} />
+				</a>
+			</div>
+			<button class="cta" bind:this={ctaEl} type="button" onclick={join}>지원하기</button>
 			<button
-				class="navbar-icon"
-				on:click={() => window.open('https://www.facebook.com/sunrinana/', '_blank')}
+				class="burger"
+				bind:this={burger}
 				type="button"
-				aria-label="Facebook"
+				aria-label="메뉴"
+				aria-controls="nav-sheet"
+				aria-expanded={isOpen}
+				onclick={() => (isOpen = !isOpen)}
 			>
-				<Fa icon={faFacebook} color="black" />
-			</button>
-			<button
-				class="navbar-icon"
-				on:click={() => window.open('https://instagram.com/sunrin_ana', '_blank')}
-				type="button"
-				aria-label="Instagram"
-			>
-				<Fa icon={faInstagram} color="black" />
-			</button>
-			<button
-				class="navbar-icon"
-				on:click={() => window.open('https://github.com/sunrin-ana', '_blank')}
-				type="button"
-				aria-label="Github"
-			>
-				<Fa icon={faGithub} color="black" />
+				<span></span><span></span>
 			</button>
 		</div>
 	</div>
-</div>
+
+	<div class="sheet" id="nav-sheet" bind:this={sheet} class:open={isOpen} inert={!isOpen}>
+		<div class="sheet-inner">
+			{#each items as item, i}
+				{#if item.href}
+					<a
+						class="s-link"
+						class:active={isActive(item.href)}
+						aria-current={isActive(item.href) ? 'page' : undefined}
+						style="--i:{i}"
+						href={item.href}
+						onclick={() => (isOpen = false)}>{item.label}</a
+					>
+				{:else}
+					<button class="s-link" style="--i:{i}" type="button" onclick={() => soon(item)}>
+						{item.label}{#if item.external}<span class="ext" aria-hidden="true">↗</span>{/if}
+					</button>
+				{/if}
+			{/each}
+			<div class="s-foot" style="--i:{items.length}">
+				<button class="s-cta" type="button" onclick={join}>지원하기</button>
+				<div class="s-pills">
+					<a class="pill round" href="https://github.com/sunrin-ana" target="_blank" rel="noopener" aria-label="GitHub"><Fa icon={faGithub} /></a>
+					<a class="pill round" href="https://instagram.com/sunrin_ana" target="_blank" rel="noopener" aria-label="Instagram"><Fa icon={faInstagram} /></a>
+					<a class="pill round" href="https://www.facebook.com/sunrinana/" target="_blank" rel="noopener" aria-label="Facebook"><Fa icon={faFacebook} /></a>
+				</div>
+			</div>
+		</div>
+	</div>
+</header>
 
 <style>
-	@keyframes openMenuItem {
-		0% {
-			opacity: 0;
-			transform: translateY(-50%);
-		}
-		20% {
-			opacity: 1;
-		}
-		100% {
-			opacity: 1;
-			transform: translateY(0);
-		}
-	}
-
-	.navbar-container {
+	.nav {
 		position: fixed;
-		top: 0;
-		width: 100%;
-		box-sizing: border-box;
-		display: flex;
-		flex-direction: row;
-		align-items: center;
-		padding: 1.5rem 3rem;
+		inset: 0 0 auto 0;
 		z-index: 100;
-		background-color: #f9f9f9;
+		pointer-events: none;
 	}
-
-	.logo-image {
-		width: 2rem;
-		height: 2rem;
-		transition: transform 0.25s ease-out;
-	}
-	.logo-button {
-		border: 0;
-		background: transparent;
-		padding: 0;
-		cursor: pointer;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
-	.logo-button:hover .logo-image {
-		transform: scale(1.2);
-		transition: transform 0.25s ease-out;
-	}
-
-	.navbar-menu {
-		display: flex;
-		flex-direction: row;
-		flex: 1;
-		margin-left: 2.5rem;
-		align-items: center;
-		background-color: #f9f9f9;
-	}
-
-	.navbar-menu-items {
-		display: flex;
-		flex-direction: row;
-		gap: 1rem;
-	}
-
-	.navbar-menu-item {
-		cursor: pointer;
+	.bar {
 		position: relative;
-		color: rgb(109, 109, 109);
-		user-select: none;
-		height: fit-content;
-		border: 0;
-		background: transparent;
-		padding: 0;
-		font: inherit;
-	}
-	.navbar-menu-item:hover {
-		color: black;
-	}
-	.navbar-menu-item::after {
-		content: '';
-		position: absolute;
-		width: 100%;
-		transform: scaleX(0);
-		height: 2px;
-		bottom: -2px;
-		left: 0;
-		background-color: black;
-		transform-origin: bottom left;
-		transition: transform 0.5s ease-out;
-	}
-	.navbar-menu-item:hover::after {
-		transform: scaleX(1);
-		transform-origin: bottom left;
-		transition: transform 0.5s cubic-bezier(0.25, 0, 0, 1);
-	}
-
-	.navbar-icons {
+		height: var(--nav-h);
 		display: flex;
-		flex-direction: row;
-		margin-left: auto;
-		gap: 0.75rem;
+		align-items: center;
+		padding: 0 24px;
+	}
+	.bar > * {
+		pointer-events: auto;
 	}
 
-	.navbar-icon {
-		cursor: pointer;
-		font-size: 1.5rem;
-		transition: transform 0.25s ease-out;
+	button {
+		font: inherit;
+		color: inherit;
+		background: none;
 		border: 0;
-		background: transparent;
 		padding: 0;
+		cursor: pointer;
+	}
+
+	/* scroll fade: everything but the mark and CTA eases up and out.
+	   `translate` is used (not transform) so centring transforms stay intact. */
+	.fade {
+		--ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
+		transition:
+			opacity 0.5s var(--ease-soft),
+			translate 0.5s var(--ease-soft),
+			filter 0.5s var(--ease-soft),
+			visibility 0s linear 0s;
+	}
+	@media (min-width: 861px) {
+	.scrolled:not(.open) .fade {
+		opacity: 0;
+		translate: 0 -6px;
+		filter: blur(2px);
+		visibility: hidden;
+		transition:
+			opacity 0.35s var(--ease-soft),
+			translate 0.35s var(--ease-soft),
+			filter 0.35s var(--ease-soft),
+			visibility 0s linear 0.35s;
+	}
+	}
+
+	/* brand */
+	.brand {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		height: 44px;
+		padding: 0 8px;
+		margin-left: -8px;
+		border-radius: 6px;
+		text-decoration: none;
+		color: var(--ink);
+	}
+	.mark {
+		width: 30px;
+		height: 30px;
+	}
+
+	/* centred menu */
+	.menu {
+		position: absolute;
+		left: 50%;
+		top: 50%;
+		transform: translate(-50%, -50%);
+		display: flex;
+		align-items: center;
+	}
+	.item {
+		display: flex;
+		align-items: center;
+		height: 36px;
+		padding: 6px 12px;
+		border-radius: 6px;
+		font-size: 1rem;
+		font-weight: 500;
+		color: #262626;
+		text-decoration: none;
+		white-space: nowrap;
+		transition: opacity 0.2s cubic-bezier(0.19, 1, 0.22, 1);
+	}
+	.item:hover {
+		opacity: 0.8;
+	}
+	.item[aria-current='page'] {
+		color: var(--brand);
+	}
+	.ext {
+		margin-left: 3px;
+		font-size: 0.75em;
+		color: var(--ink-3);
+	}
+
+	/* right side */
+	.right {
+		margin-left: auto;
+		position: relative;
+		display: flex;
+		align-items: center;
+		height: 38px;
+	}
+	.pills {
+		display: flex;
+		align-items: center;
+		gap: 4px;
+	}
+	.pill {
 		display: inline-flex;
 		align-items: center;
+		gap: 8px;
+		height: 38px;
+		padding: 6px 14px;
+		border: 1px solid #f0f0f0;
+		border-radius: 999px;
+		background: rgba(255, 255, 255, 0.6);
+		font-size: 1rem;
+		font-weight: 500;
+		color: #262626;
+		text-decoration: none;
+		white-space: nowrap;
+		transition:
+			border-color 0.2s ease,
+			background 0.2s ease;
+	}
+	.pill:hover {
+		border-color: var(--line-2);
+		background: #fff;
+	}
+	.pill :global(svg) {
+		font-size: 1.05rem;
+	}
+	.pill.round {
+		width: 38px;
+		padding: 0;
 		justify-content: center;
 	}
-	.navbar-icon:hover {
-		transform: scale(1.2);
-		transition: transform 0.25s ease-out;
+	.cta {
+		position: absolute;
+		right: 0;
+		top: 50%;
+		height: 35px;
+		padding: 6px 14px;
+		border: 1px solid var(--brand);
+		border-radius: 999px;
+		background: var(--brand);
+		color: #fff;
+		font-size: 1rem;
+		font-weight: 500;
+		white-space: nowrap;
+		opacity: 0;
+		visibility: hidden;
+		transform: translateY(-50%);
+		translate: 10px 0;
+		scale: 0.94;
+		transition:
+			opacity 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+			translate 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+			scale 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+			visibility 0s linear 0.3s,
+			background 0.2s ease;
+	}
+	.scrolled:not(.open) .cta {
+		opacity: 1;
+		visibility: visible;
+		translate: 0 0;
+		scale: 1;
+		transition:
+			opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.12s,
+			translate 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.12s,
+			scale 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.12s,
+			visibility 0s linear 0s,
+			background 0.2s ease;
+	}
+	.cta:hover {
+		background: var(--brand-2);
 	}
 
-	.hamburger-icon {
+	/* burger (mobile) */
+	.burger {
 		display: none;
-		cursor: pointer;
-		user-select: none;
-		border: 0;
-		background: transparent;
-		padding: 0;
+		position: relative;
+		width: 40px;
+		height: 40px;
+		margin-right: -8px;
+		border-radius: 999px;
+	}
+	.burger span {
+		position: absolute;
+		left: 11px;
+		right: 11px;
+		height: 1.5px;
+		border-radius: 1px;
+		background: var(--ink);
+		transition:
+			transform 0.3s var(--ease),
+			top 0.3s var(--ease);
+	}
+	.burger span:first-child {
+		top: 16px;
+	}
+	.burger span:last-child {
+		top: 23px;
+	}
+	.open .burger span:first-child {
+		top: 19.5px;
+		transform: rotate(45deg);
+	}
+	.open .burger span:last-child {
+		top: 19.5px;
+		transform: rotate(-45deg);
 	}
 
-	@media (max-width: 1024px) {
-		.navbar-container { padding: 1.5rem 1.5rem; }
-		.navbar-menu-items { gap: 0.75rem; }
+	.sheet {
+		display: none;
 	}
 
-	/* Responsive Mobile Styles */
-	@media (max-width: 768px) {
-		.navbar-container {
-			padding: 1rem 0;
-			width: 100%;
-			justify-content: space-between;
+	@media (max-width: 860px) {
+		.nav {
+			pointer-events: auto;
+			background: rgba(255, 255, 255, 0.9);
+			backdrop-filter: saturate(180%) blur(12px);
+			-webkit-backdrop-filter: saturate(180%) blur(12px);
 		}
-		.logo-image {
-			margin-left: 1rem;
-			transform: scale(1.1);
+		.nav.scrolled,
+		.nav.open {
+			box-shadow: 0 1px 0 var(--line);
 		}
-
-		.navbar-menu {
-			flex-direction: column;
-			align-items: flex-start;
-			position: absolute;
-			top: 4rem;
-			width: 100%;
-			overflow: hidden;
-			padding: 0;
-			margin: 0 auto;
-
+		.bar {
+			padding: 0 20px;
+		}
+		.menu,
+		.pills,
+		.cta {
+			display: none;
+		}
+		.burger {
+			display: block;
+		}
+		.mark {
+			width: 26px;
+			height: 26px;
+		}
+		.sheet {
+			display: block;
 			height: 0;
-			opacity: 0;
-			transition:
-				height 0.5s ease-out,
-				opacity 0.1s ease-out 0.4s;
+			overflow: hidden;
+			background: #fff;
+			transition: height 0.4s var(--ease);
 		}
-		.navbar-menu.open {
-			height: 100vh;
-			opacity: 1;
-			transition:
-				height 0.5s ease-out,
-				opacity 0.1s ease-out 0s;
+		.sheet.open {
+			height: calc(100dvh - var(--nav-h));
+			overflow-y: auto;
+			overscroll-behavior: contain;
 		}
-
-		.navbar-menu-items {
-			flex-direction: column;
-			align-items: flex-start;
-			gap: 0.25rem;
-		}
-
-		.navbar-menu-item {
-			margin: 0.5rem 1rem;
-			width: fit-content;
-			opacity: 0; /* Hidden by default when menu is closed */
-		}
-
-		.navbar-menu.open .navbar-menu-item {
-			opacity: 1;
-			animation: openMenuItem 0.5s ease-out forwards;
-			animation-delay: calc(0.5s + var(--delay-index) * 0.1s);
-			transition: opacity 0.5s ease-out;
-			transition-delay: calc(0.5s + var(--delay-index) * 0.1s);
-		}
-
-		.navbar-icons {
-			justify-content: flex-start;
-			margin: 0.5rem 1rem;
-			opacity: 0; /* Hidden by default when menu is closed */
-		}
-
-		.navbar-menu.open .navbar-icons {
-			opacity: 1;
-			animation: openMenuItem 0.5s ease-out forwards;
-			animation-delay: 1.1s;
-			transition: opacity 0.5s ease-out 1.1s;
-		}
-
-		.navbar-icon {
-			font-size: 2rem;
-		}
-
-		.hamburger-icon {
+		.sheet-inner {
 			display: flex;
-			justify-content: center;
-			align-items: center;
-			margin-right: 1rem;
-			transform: rotate(0deg);
-			transition: transform 0.5s ease-out;
+			flex-direction: column;
+			padding: 8px 20px 32px;
 		}
-		.hamburger-icon.open {
-			transform: rotate(-90deg);
+		.s-link {
+			display: flex;
+			align-items: baseline;
+			padding: 14px 0;
+			font-size: 1.6rem;
+			font-weight: 500;
+			letter-spacing: -0.025em;
+			color: var(--ink-3);
+			text-decoration: none;
+			text-align: left;
+			opacity: 0;
+			transform: translateY(-6px);
+		}
+		.s-link.active {
+			color: var(--ink);
+		}
+		.s-foot {
+			display: flex;
+			flex-direction: column;
+			gap: 16px;
+			margin-top: 20px;
+			padding-top: 24px;
+			border-top: 1px solid var(--line);
+			opacity: 0;
+			transform: translateY(-6px);
+		}
+		.s-cta {
+			height: 46px;
+			border-radius: 999px;
+			background: var(--brand);
+			color: #fff;
+			font-size: 1rem;
+			font-weight: 500;
+		}
+		.s-pills {
+			display: flex;
+			gap: 6px;
+			flex-wrap: wrap;
+		}
+		.sheet.open .s-link,
+		.sheet.open .s-foot {
+			opacity: 1;
+			transform: none;
+			transition:
+				opacity 0.35s ease,
+				transform 0.35s var(--ease);
+			transition-delay: calc(0.06s + var(--i) * 0.04s);
 		}
 	}
 </style>

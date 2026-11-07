@@ -4,6 +4,12 @@
 	import * as THREE from 'three';
 	import { GLTFLoader, type GLTF } from 'three/addons/loaders/GLTFLoader.js';
 
+	export let color = 0x334882;
+	export let background: number | null = 0xffffff;
+	export let scale = 0.5;
+	export let dotSize = 0.65;
+	export let spacing = 100.0;
+
 	let canvas: HTMLCanvasElement | undefined;
 	let animationFrameId = 0;
 	let renderer: THREE.WebGLRenderer | undefined;
@@ -67,11 +73,13 @@
 
 		renderer = new THREE.WebGLRenderer({
 			canvas: canvas,
-			antialias: true
+			antialias: true,
+			alpha: background === null
 		});
 		renderer.setSize(window.innerWidth*.6, window.innerHeight*.6);
 		renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
-		renderer.setClearColor(0xf9f9f9,1);
+		if (background === null) renderer.setClearColor(0x000000, 0);
+		else renderer.setClearColor(background, 1);
 
 		const uniforms: {
 			uColor: THREE.IUniform<THREE.Color>;
@@ -82,10 +90,10 @@
 			uFadeEnd: THREE.IUniform<number>;
 			uResolution: THREE.IUniform<THREE.Vector2>;
 		} = {
-			uColor: { value: new THREE.Color(0x334882) },
+			uColor: { value: new THREE.Color(color) },
 			uLightPosition: { value: new THREE.Vector3(-5, -.2, 3) },
-			uSpacing: { value: 100.0 },
-			uDotSize: { value: .65 },
+			uSpacing: { value: spacing },
+			uDotSize: { value: dotSize },
 			uFadeStart: { value: -5.0 },
 			uFadeEnd: { value: 1.0 },
 			uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }
@@ -113,7 +121,7 @@
 		// 특검
 		const handleResize = () => {
 			if (!camera || !renderer) return;
-			if(window.innerWidth > 600) mod = .5;
+			if(window.innerWidth > 600) mod = scale;
 			else mod = .8;
 
 			size = Math.min(window.innerWidth, window.innerHeight)*mod;
