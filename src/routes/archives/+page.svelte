@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { tick } from 'svelte';
 	import Nav from '$lib/Nav.svelte';
 	import Footer from '$lib/Footer.svelte';
 	import { reveal } from '$lib/reveal.js';
@@ -17,15 +16,6 @@
 		member: archives.filter((a) => a.category === 'member').length,
 		internal: archives.filter((a) => a.category === 'internal').length
 	};
-
-	async function showInList(e: MouseEvent, id: string) {
-		e.preventDefault();
-		active = 'all';
-		query = '';
-		await tick();
-		document.getElementById(`list-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-		history.replaceState(null, '', `#list-${id}`);
-	}
 
 	let list = $derived(
 		archives
@@ -57,19 +47,28 @@
 			<p class="lede">AnA 부원들이 만든 서비스와 동아리에서 운영하는 서비스를 모았습니다.</p>
 		</header>
 
-		<!-- ============ FEATURED (Apple tiles) ============ -->
+		<!-- ============ FEATURED (magazine: first = lead, rest = side) ============ -->
 		{#if featured.length}
-			<section class="row featured">
+			<section class="row featured" class:solo={featured.length === 1} style="--side-rows:{Math.max(featured.length - 1, 1)}">
 				{#each featured as item, i}
-					<article class="tile reveal" use:reveal id={item.id} style="--from:{item.theme[0]}; --to:{item.theme[1]}; --d:{i * 0.06}s">
-						<span class="tile-status"><i></i>{statusLabels[item.status]}</span>
-						<h2>{item.name}</h2>
-						<p>{item.tagline}</p>
-						<div class="tile-links">
-							{#if item.url}
-								<a class="btn btn-brand btn-sm" href={item.url} target="_blank" rel="noopener">방문하기</a>
-							{/if}
-							<a class="text-link" href="#list-{item.id}" onclick={(e) => showInList(e, item.id)}>자세히 보기 →</a>
+					<article
+						class="tile reveal"
+						class:lead={i === 0}
+						use:reveal
+						id={item.id}
+						style="--from:{item.theme[0]}; --to:{item.theme[1]}; --d:{i * 0.06}s"
+					>
+						<div class="tile-copy">
+							<span class="tile-status"><i></i>{statusLabels[item.status]}</span>
+							<h2>{item.name}</h2>
+							<p>{item.tagline}</p>
+							{#if i === 0}<p class="tile-desc">{item.description}</p>{/if}
+							<div class="tile-links">
+								{#if item.url}
+									<a class="btn btn-brand btn-sm" href={item.url} target="_blank" rel="noopener">방문하기</a>
+								{/if}
+								<a class="text-link" href="/archives/{item.id}" aria-label="{item.name} 자세히 보기">자세히 보기 →</a>
+							</div>
 						</div>
 						<div class="app-icon" aria-hidden="true"><svg viewBox="0 0 52 52"><path fill-rule="evenodd" clip-rule="evenodd" d="M52 52L31.871 0H20.129L0 52H10.9032L18.8923 28.862L26.605 52L52 52ZM39.6006 47.6667L26.8387 10.7059H25.1613L21.2164 22.131L29.7283 47.6667H39.6006Z" fill="#fff"/></svg></div>
 					</article>
@@ -117,7 +116,7 @@
 								</div>
 								<div>
 									<div class="r-title">
-										<h3>{item.name}</h3>
+										<h3><a class="r-link" href="/archives/{item.id}">{item.name}</a></h3>
 										<span class="status status-{item.status}">{statusLabels[item.status]}</span>
 									</div>
 									<p>{item.description}</p>
@@ -149,13 +148,13 @@
 			{/if}
 		</section>
 
-		<!-- ============ SUBMIT ============ -->
-		<section class="row submit-row">
-			<div class="submit">
+		<!-- ============ SUBMIT (split) ============ -->
+		<section class="row submit">
+			<div class="submit-copy">
 				<h2>프로젝트 추가하기</h2>
 				<p>부원이 만든 서비스는 <code>src/lib/archives.js</code>에 항목을 추가하면 이 페이지에 표시됩니다.</p>
-				<a class="btn btn-line" href="https://github.com/sunrin-ana" target="_blank" rel="noopener">GitHub ↗</a>
 			</div>
+			<a class="btn btn-line" href="https://github.com/sunrin-ana" target="_blank" rel="noopener">GitHub ↗</a>
 		</section>
 	</div>
 </main>
@@ -165,12 +164,6 @@
 <style>
 	main {
 		padding-top: var(--nav-h);
-	}
-	.ok {
-		width: 7px;
-		height: 7px;
-		border-radius: 50%;
-		background: #3ddc84;
 	}
 
 	/* ---------- Intro ---------- */
@@ -185,17 +178,6 @@
 		padding: 120px 24px 72px;
 		border-top: 0;
 	}
-	.intro-grid {
-		position: absolute;
-		inset: 0;
-		z-index: -1;
-		background-image:
-			linear-gradient(var(--line) 1px, transparent 1px),
-			linear-gradient(90deg, var(--line) 1px, transparent 1px);
-		background-size: 56px 56px;
-		mask-image: radial-gradient(60% 70% at 50% 0%, #000, transparent 75%);
-		-webkit-mask-image: radial-gradient(60% 70% at 50% 0%, #000, transparent 75%);
-	}
 	.intro h1 {
 		margin: 0;
 		font-size: clamp(2.4rem, 5.6vw, 4rem);
@@ -207,12 +189,15 @@
 		color: var(--ink-3);
 	}
 
-	/* ---------- Featured tiles ---------- */
+	/* ---------- Featured: lead tile + side tiles (2 : 1) ---------- */
 	.featured {
 		display: grid;
-		grid-template-columns: 1fr 1fr;
+		grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
 		gap: 12px;
 		padding: 12px;
+	}
+	.featured.solo {
+		grid-template-columns: 1fr;
 	}
 	.tile {
 		position: relative;
@@ -226,6 +211,11 @@
 		border-radius: var(--radius-lg);
 		background: var(--surface-2);
 		scroll-margin-top: calc(var(--nav-h) + 24px);
+	}
+	.tile-copy {
+		display: flex;
+		flex-direction: column;
+		align-items: inherit;
 	}
 	.tile-status {
 		display: inline-flex;
@@ -242,8 +232,9 @@
 	}
 	.tile h2 {
 		margin: 10px 0 6px;
-		font-size: clamp(2.2rem, 4vw, 3.2rem);
+		font-size: clamp(2rem, 3vw, 2.6rem);
 		font-weight: 500;
+		line-height: 1.1;
 		letter-spacing: -0.025em;
 	}
 	.tile p {
@@ -260,9 +251,10 @@
 	.app-icon {
 		margin-top: auto;
 		transform: translateY(28%);
-		width: 240px;
+		width: 220px;
+		flex-shrink: 0;
 		aspect-ratio: 1;
-		border-radius: 54px;
+		border-radius: 50px;
 		background: linear-gradient(160deg, var(--from), var(--to));
 		display: grid;
 		place-items: center;
@@ -279,6 +271,59 @@
 		width: 44%;
 		transform: translateY(-18%);
 		filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.18));
+	}
+	.tile-desc {
+		display: none;
+	}
+
+	/* lead tile: copy left, icon right (tablet + desktop).
+	   Copy is top-anchored at the same 48px as the side tiles so status lines share a top line. */
+	@media (min-width: 641px) {
+		.tile.lead {
+			align-items: flex-start;
+			text-align: left;
+			padding: 48px 56px 0;
+		}
+		.lead .tile-copy {
+			position: relative;
+			z-index: 1;
+			max-width: 46%;
+		}
+		.lead h2 {
+			margin: 10px 0 10px;
+			font-size: clamp(3rem, 5.2vw, 4.25rem);
+			line-height: 1.04;
+		}
+		.lead p {
+			font-size: 1.15rem;
+		}
+		.lead .tile-desc {
+			display: block;
+			margin-top: 12px;
+			font-size: 0.95rem;
+			line-height: 1.6;
+			color: var(--ink-3);
+		}
+		.lead .tile-links {
+			margin-top: 28px;
+		}
+		.lead .app-icon {
+			position: absolute;
+			right: 7%;
+			bottom: 0;
+			margin: 0;
+			width: clamp(240px, 26vw, 320px);
+			border-radius: 22.5%;
+			transform: translateY(24%);
+		}
+		.tile.lead:hover .app-icon {
+			transform: translateY(17%);
+		}
+	}
+	@media (min-width: 961px) {
+		.tile.lead {
+			grid-row: span var(--side-rows);
+		}
 	}
 
 	/* ---------- Browse ---------- */
@@ -321,14 +366,14 @@
 	.chip.active {
 		background: var(--ink);
 		border-color: var(--ink);
-		color: #fff;
+		color: var(--surface);
 	}
 	.count {
 		font-size: 11px;
 		color: var(--ink-3);
 	}
 	.chip.active .count {
-		color: rgba(255, 255, 255, 0.75);
+		color: color-mix(in srgb, var(--surface) 75%, transparent);
 	}
 	.search {
 		display: flex;
@@ -389,10 +434,54 @@
 		padding: 24px 0;
 		border-bottom: 1px solid var(--line);
 		scroll-margin-top: calc(var(--nav-h) + 24px);
-		transition: background 0.15s;
 	}
-	.r:target {
+	/* the whole row opens the detail page; the external link stays on top.
+	   Tint and focus ring live on ::before, which reaches a little past the content edge
+	   so the ring clears the thumbnail and the ↗ button; isolation keeps it under the content. */
+	.r {
+		position: relative;
+		isolation: isolate;
+		--row-bleed: 16px;
+	}
+	.r::before {
+		content: '';
+		position: absolute;
+		inset: 0 calc(-1 * var(--row-bleed));
+		z-index: -1;
+		border-radius: 12px;
+		transition: background 0.15s ease;
+		pointer-events: none;
+	}
+	.r:hover::before {
+		background: var(--surface-2);
+	}
+	.r:target::before {
 		background: var(--brand-soft);
+	}
+	.r:has(.r-link:focus-visible)::before {
+		outline: 2px solid var(--brand);
+		outline-offset: 0;
+	}
+	.r-link {
+		color: inherit;
+		text-decoration: none;
+	}
+	.r-link::after {
+		content: '';
+		position: absolute;
+		inset: 0 calc(-1 * var(--row-bleed));
+	}
+	.r:hover .r-link {
+		text-decoration: underline;
+		text-underline-offset: 4px;
+		text-decoration-thickness: 1px;
+	}
+	.r-link:focus-visible {
+		outline: none;
+	}
+	.r-cta {
+		position: relative;
+		z-index: 1;
 	}
 	.r-main {
 		display: flex;
@@ -450,12 +539,12 @@
 		color: var(--ink-3);
 	}
 	.status-live {
-		background: #e8f7ee;
-		color: #15803d;
+		background: var(--ok-soft);
+		color: var(--ok-ink);
 	}
 	.status-beta {
-		background: #fff4e5;
-		color: #b45309;
+		background: var(--warn-soft);
+		color: var(--warn-ink);
 	}
 	.r-cat,
 	.r-year {
@@ -492,7 +581,7 @@
 		align-items: center;
 		justify-content: center;
 		background: var(--ink);
-		color: #fff;
+		color: var(--surface);
 		text-decoration: none;
 		transition: transform 0.2s var(--ease);
 	}
@@ -520,31 +609,24 @@
 		color: var(--ink-3);
 	}
 
-	/* ---------- Submit ---------- */
-	.submit-row {
-		padding: 12px;
-	}
+	/* ---------- Submit (split row) ---------- */
 	.submit {
-		position: relative;
-		overflow: hidden;
-		isolation: isolate;
-		display: flex;
-		flex-direction: column;
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto;
 		align-items: center;
-		gap: 16px;
-		text-align: center;
-		padding: 64px 24px;
-		border-radius: var(--radius-lg);
-		background: var(--surface-2);
+		gap: 24px 48px;
+		padding: 64px 56px;
 	}
 	.submit h2 {
-		margin: 0;
-		font-size: 1.35rem;
+		margin: 0 0 10px;
+		font-size: clamp(1.5rem, 2.4vw, 1.9rem);
 		font-weight: 500;
-		letter-spacing: -0.02em;
+		line-height: 1.2;
+		letter-spacing: -0.025em;
 	}
 	.submit p {
-		margin: 0 0 8px;
+		margin: 0;
+		max-width: 620px;
 		color: var(--ink-3);
 		line-height: 1.65;
 	}
@@ -553,7 +635,7 @@
 		font-size: 0.85em;
 		padding: 2px 6px;
 		border-radius: 6px;
-		background: #fff;
+		background: var(--surface);
 		border: 1px solid var(--line);
 		color: var(--ink);
 	}
@@ -585,19 +667,18 @@
 		.browse {
 			padding: 56px 24px 72px;
 		}
+		.submit {
+			padding: 56px 24px;
+		}
 	}
-	@media (max-width: 860px) {
+	@media (max-width: 960px) {
 		.featured {
 			grid-template-columns: 1fr;
 		}
-
 	}
 	@media (max-width: 640px) {
 		.intro {
 			padding: 72px 20px 48px;
-		}
-		.br-lg {
-			display: none;
 		}
 		.featured {
 			padding: 8px;
@@ -620,11 +701,13 @@
 		.r-stack {
 			padding-left: 0;
 		}
-		.submit-row {
-			padding: 8px;
+		.r {
+			--row-bleed: 12px;
 		}
 		.submit {
-			padding: 64px 20px;
+			grid-template-columns: 1fr;
+			justify-items: start;
+			padding: 48px 20px;
 		}
 	}
 </style>

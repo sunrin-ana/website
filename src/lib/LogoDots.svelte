@@ -7,7 +7,10 @@
 	import { onMount } from 'svelte';
 	import * as THREE from 'three';
 
-	let { color = '#334882', side = '#26365f', background = '#ffffff' } = $props();
+	import { cssColor, onThemeChange } from '$lib/theme.js';
+
+	// colours follow the theme (brand ink, a deeper side, page surface) unless pinned
+	let { color, side, background }: { color?: string; side?: string; background?: string } = $props();
 
 	const LOGO =
 		'M52 52L31.871 0H20.129L0 52H10.9032L18.8923 28.862L26.605 52L52 52ZM39.6006 47.6667L26.8387 10.7059H25.1613L21.2164 22.131L29.7283 47.6667H39.6006Z';
@@ -68,7 +71,7 @@
 		wrap.appendChild(renderer.domElement);
 
 		const scene = new THREE.Scene();
-		scene.fog = new THREE.Fog(background, 5.2, 7.5);
+		scene.fog = new THREE.Fog('#ffffff', 5.2, 7.5);
 		const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 50);
 		camera.position.set(0, 0, 5.4);
 
@@ -82,10 +85,15 @@
 		const mesh = new THREE.InstancedMesh(geo, mat, pts.length);
 		group.add(mesh);
 
-		const cFront = new THREE.Color(color),
-			cSide = new THREE.Color(side);
-		pts.forEach((d, i) => mesh.setColorAt(i, d.side ? cSide : cFront));
-		mesh.instanceColor.needsUpdate = true;
+		const cFront = new THREE.Color(),
+			cSide = new THREE.Color();
+		function paint() {
+			cFront.set(color ?? cssColor('var(--logo-ink)'));
+			cSide.set(side ?? cssColor('color-mix(in oklab, var(--logo-ink) 72%, var(--brand-deep))'));
+			scene.fog.color.set(background ?? cssColor('var(--surface)'));
+			pts.forEach((d, i) => mesh.setColorAt(i, d.side ? cSide : cFront));
+			mesh.instanceColor.needsUpdate = true;
+		}
 
 		const dummy = new THREE.Object3D();
 		const light = new Float32Array(pts.length);
@@ -110,6 +118,10 @@
 			needsDraw = true;
 		}
 		resize();
+		const offTheme = onThemeChange(() => {
+			paint();
+			needsDraw = true;
+		});
 		const ro = new ResizeObserver(resize);
 		ro.observe(wrap);
 
@@ -186,6 +198,7 @@
 		io.observe(wrap);
 
 		return () => {
+			offTheme();
 			cancelAnimationFrame(raf);
 			ro.disconnect();
 			io.disconnect();

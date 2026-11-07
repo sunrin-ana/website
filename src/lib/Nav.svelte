@@ -98,7 +98,7 @@
 <header class="nav" class:scrolled class:open={isOpen}>
 	<div class="bar">
 		<a class="brand" bind:this={brandEl} href="/" aria-label="AnA 홈" onclick={() => (isOpen = false)}>
-			<img class="mark" src="/logo.svg" alt="" width="30" height="30" />
+			<svg class="mark" viewBox="0 0 52 52" width="30" height="30" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M52 52L31.871 0H20.129L0 52H10.9032L18.8923 28.862L26.605 52L52 52ZM39.6006 47.6667L26.8387 10.7059H25.1613L21.2164 22.131L29.7283 47.6667H39.6006Z" fill="currentColor" /></svg>
 		</a>
 
 		<nav class="menu fade" aria-label="Main">
@@ -234,6 +234,7 @@
 		color: var(--ink);
 	}
 	.mark {
+		color: var(--brand-ink);
 		width: 30px;
 		height: 30px;
 	}
@@ -255,7 +256,7 @@
 		border-radius: 6px;
 		font-size: 1rem;
 		font-weight: 500;
-		color: #262626;
+		color: var(--ink);
 		text-decoration: none;
 		white-space: nowrap;
 		transition: opacity 0.2s cubic-bezier(0.19, 1, 0.22, 1);
@@ -291,12 +292,12 @@
 		gap: 8px;
 		height: 38px;
 		padding: 6px 14px;
-		border: 1px solid #f0f0f0;
+		border: 1px solid var(--pill-border);
 		border-radius: 999px;
-		background: rgba(255, 255, 255, 0.6);
+		background: color-mix(in srgb, var(--surface) 60%, transparent);
 		font-size: 1rem;
 		font-weight: 500;
-		color: #262626;
+		color: var(--ink);
 		text-decoration: none;
 		white-space: nowrap;
 		transition:
@@ -305,7 +306,7 @@
 	}
 	.pill:hover {
 		border-color: var(--line-2);
-		background: #fff;
+		background: var(--surface);
 	}
 	.pill :global(svg) {
 		font-size: 1.05rem;
@@ -324,7 +325,7 @@
 		border: 1px solid var(--brand);
 		border-radius: 999px;
 		background: var(--brand);
-		color: #fff;
+		color: var(--on-brand);
 		font-size: 1rem;
 		font-weight: 500;
 		white-space: nowrap;
@@ -398,7 +399,7 @@
 	@media (max-width: 860px) {
 		.nav {
 			pointer-events: auto;
-			background: rgba(255, 255, 255, 0.9);
+			background: color-mix(in srgb, var(--surface) 90%, transparent);
 			backdrop-filter: saturate(180%) blur(12px);
 			-webkit-backdrop-filter: saturate(180%) blur(12px);
 		}
@@ -425,7 +426,7 @@
 			display: block;
 			height: 0;
 			overflow: hidden;
-			background: #fff;
+			background: var(--surface);
 			transition: height 0.4s var(--ease);
 		}
 		.sheet.open {
@@ -468,7 +469,7 @@
 			height: 46px;
 			border-radius: 999px;
 			background: var(--brand);
-			color: #fff;
+			color: var(--on-brand);
 			font-size: 1rem;
 			font-weight: 500;
 		}

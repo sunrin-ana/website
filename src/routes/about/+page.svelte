@@ -28,8 +28,35 @@
 		}
 	];
 
+	/* ---------- history: side-scroll ---------- */
+	let track: HTMLDivElement | undefined = $state();
+	let atStart = $state(true);
+	let atEnd = $state(false);
 
+	function updateEnds() {
+		if (!track) return;
+		atStart = track.scrollLeft <= 2;
+		atEnd = track.scrollLeft + track.clientWidth >= track.scrollWidth - 2;
+	}
 
+	function step(dir: 1 | -1) {
+		if (!track) return;
+		const card = track.querySelector<HTMLElement>('.tl-item');
+		const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+		track.scrollBy({ left: dir * (card?.offsetWidth ?? track.clientWidth), behavior: reduce ? 'auto' : 'smooth' });
+	}
+
+	$effect(() => {
+		if (!track) return;
+		updateEnds();
+		const ro = new ResizeObserver(updateEnds);
+		ro.observe(track);
+		return () => ro.disconnect();
+	});
+
+	/* ---------- terminal: clickable commands ---------- */
+	let term: Terminal | undefined = $state();
+	const commands = ['help', 'whoami', 'ls', 'cat /ana/motto.txt', 'cat /contact.json'];
 </script>
 
 <svelte:head>
@@ -66,44 +93,61 @@
 			<WhyAnA />
 		</section>
 
-		<!-- ============ HISTORY ============ -->
-		<section class="row">
-			<header class="section-head reveal" use:reveal>
-				<h2 class="title">연혁</h2>
-				<p class="subtitle">2011년부터 지금까지, AnA가 걸어온 길.</p>
+		<!-- ============ HISTORY (side-scroll timeline) ============ -->
+		<section class="row timeline">
+			<header class="tl-head reveal" use:reveal>
+				<div class="tl-copy">
+					<h2 class="title">연혁</h2>
+					<p class="subtitle">2011년부터 지금까지, AnA가 걸어온 길.</p>
+				</div>
+				<div class="tl-nav">
+					<button type="button" class="tl-btn" aria-label="이전" disabled={atStart} onclick={() => step(-1)}>
+						<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M10 3.5 5.5 8l4.5 4.5" /></svg>
+					</button>
+					<button type="button" class="tl-btn" aria-label="다음" disabled={atEnd} onclick={() => step(1)}>
+						<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5" /></svg>
+					</button>
+				</div>
 			</header>
-		</section>
-		<section class="row cells history">
-			{#each history as h, i}
-				<article class="cell h-cell" class:empty={!h.title}>
-					{#if h.year}
-						<span class="h-year">{h.year}</span>
-					{:else}
-						<span class="ph ph-year" aria-hidden="true"></span>
-					{/if}
-					{#if h.title}
-						<h3>{h.title}</h3>
-						{#if h.body}<p>{h.body}</p>{/if}
-					{:else}
-						<span class="ph ph-title" aria-hidden="true"></span>
-						<span class="ph ph-line" aria-hidden="true"></span>
-						<span class="ph ph-line short" aria-hidden="true"></span>
-					{/if}
-				</article>
-			{/each}
+			<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+			<div class="tl-track" bind:this={track} onscroll={updateEnds} tabindex="0" role="region" aria-label="연혁 목록">
+				<ol class="tl-list">
+					{#each history as h}
+						<li class="tl-item" class:filled={!!h.title}>
+							<span class="tl-node" aria-hidden="true"></span>
+							{#if h.year}
+								<span class="h-year">{h.year}</span>
+							{:else}
+								<span class="ph ph-year" aria-hidden="true"></span>
+							{/if}
+							{#if h.title}
+								<h3>{h.title}</h3>
+								{#if h.body}<p>{h.body}</p>{/if}
+							{:else}
+								<span class="ph ph-title" aria-hidden="true"></span>
+								<span class="ph ph-line" aria-hidden="true"></span>
+								<span class="ph ph-line short" aria-hidden="true"></span>
+							{/if}
+						</li>
+					{/each}
+				</ol>
+			</div>
 		</section>
 
-		<!-- ============ STACK ============ -->
+		<!-- ============ STACK (asymmetric split) ============ -->
 		<section class="row stack">
-			<h2 class="col-title">기술 스택</h2>
-			<ul class="log">
+			<header class="stack-copy reveal" use:reveal>
+				<h2 class="title">기술 스택</h2>
+				<p class="subtitle">커리큘럼에서 다루는 기술들입니다.</p>
+			</header>
+			<ul class="stack-list">
 				{#each stack as g}
 					<li class="stack-row">
 						<span class="spec-k">{g.area}</span>
 						<span class="icons">
 							{#each g.keys as key}
 								<span class="tile" title={tech[key].label}>
-									<img src={tech[key].src} alt={tech[key].label} width="22" height="22" loading="lazy" />
+									<img src={tech[key].src} alt={tech[key].label} width="26" height="26" loading="lazy" />
 								</span>
 							{/each}
 						</span>
@@ -112,26 +156,36 @@
 			</ul>
 		</section>
 
-		<!-- ============ TERMINAL ============ -->
-		<section class="row">
-			<header class="section-head reveal" use:reveal>
-				<h2 class="title">AnA 터미널</h2>
-				<p class="subtitle"><code>help</code>를 입력하면 사용할 수 있는 명령어를 볼 수 있습니다.</p>
-			</header>
-		</section>
+		<!-- ============ TERMINAL (zigzag: window left, text right) ============ -->
 		<section class="row shell">
-			<div class="window">
-				<div class="w-bar">
-					<span class="lights"><i></i><i></i><i></i></span>
-					<span>sunrin@ana: ~</span>
-					<span></span>
-				</div>
-				<div class="w-body">
-					<AnaFetch />
-					<div class="term-host">
-						<Terminal />
+			<div class="shell-win">
+				<div class="window">
+					<div class="w-bar">
+						<span class="lights"><i></i><i></i><i></i></span>
+						<span>sunrin@ana: ~</span>
+						<span></span>
+					</div>
+					<div class="w-body">
+						<AnaFetch />
+						<div class="term-host">
+							<Terminal bind:this={term} />
+						</div>
 					</div>
 				</div>
+			</div>
+			<div class="shell-copy reveal" use:reveal>
+				<h2 class="title">AnA 터미널</h2>
+				<p class="subtitle"><code>help</code>를 입력하면 사용할 수 있는 명령어를 볼 수 있습니다.</p>
+				<ul class="cmds">
+					{#each commands as c}
+						<li>
+							<button type="button" class="cmd" onclick={() => term?.run(c)}>
+								<span>{c}</span>
+								<svg class="cmd-ret" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M12.5 3.5v4.5a1.5 1.5 0 0 1-1.5 1.5H4M6.5 7 4 9.5 6.5 12" /></svg>
+							</button>
+						</li>
+					{/each}
+				</ul>
 			</div>
 		</section>
 
@@ -177,7 +231,7 @@
 		margin: 20px 0 0;
 		font-size: clamp(1rem, 1.35vw, 1.2rem);
 		line-height: 1.6;
-		color: rgba(28, 28, 31, 0.7);
+		color: color-mix(in srgb, var(--ink) 70%, transparent);
 	}
 	.globe-row {
 		margin-top: 40px;
@@ -226,22 +280,140 @@
 		line-height: 1.65;
 	}
 
-	/* ---------- Log + specs ---------- */
-	.history {
-		grid-template-columns: repeat(3, 1fr);
+	/* ---------- Shared: left-aligned section copy ---------- */
+	.tl-copy .subtitle,
+	.stack-copy .subtitle,
+	.shell-copy .subtitle {
+		color: color-mix(in srgb, var(--ink) 68%, transparent);
 	}
-	.h-cell {
-		min-height: 168px;
+
+	/* ---------- History: side-scroll timeline ---------- */
+	.timeline {
+		padding: 96px 0 64px;
 	}
-	.h-cell:nth-child(n + 4) {
-		border-top: 1px solid var(--line);
+	.tl-head {
+		display: flex;
+		align-items: flex-end;
+		justify-content: space-between;
+		gap: 24px;
+		padding: 0 40px 48px;
 	}
-	.h-cell:nth-child(3n + 1) {
-		border-left: 0;
+	.tl-copy {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+	}
+	.tl-nav {
+		display: flex;
+		gap: 8px;
+		flex-shrink: 0;
+	}
+	.tl-btn {
+		display: grid;
+		place-items: center;
+		width: 38px;
+		height: 38px;
+		padding: 0;
+		border: 1px solid var(--pill-border);
+		border-radius: 999px;
+		background: var(--surface);
+		color: var(--ink);
+		cursor: pointer;
+		transition:
+			border-color 0.2s ease,
+			opacity 0.2s ease;
+	}
+	.tl-btn:hover:not(:disabled) {
+		border-color: var(--line-2);
+	}
+	.tl-btn:focus-visible {
+		border-radius: 999px;
+	}
+	.tl-btn:disabled {
+		opacity: 0.35;
+		cursor: default;
+	}
+	.tl-btn svg {
+		fill: none;
+		stroke: currentColor;
+		stroke-width: 1.5;
+		stroke-linecap: round;
+		stroke-linejoin: round;
+	}
+	.tl-track {
+		container-type: inline-size;
+		overflow-x: auto;
+		overscroll-behavior-x: contain;
+		scroll-snap-type: x mandatory;
+		scroll-padding-inline: 40px;
+		scrollbar-width: none;
+	}
+	.tl-track::-webkit-scrollbar {
+		display: none;
+	}
+	.tl-track:focus-visible {
+		outline-offset: -2px;
+		border-radius: 0;
+	}
+	.tl-list {
+		display: flex;
+		width: max-content;
+		min-width: 100%;
+		list-style: none;
+		margin: 0;
+		/* aligns the first card with the frame's inner content edge */
+		padding: 0 40px;
+		--card-w: calc((100cqw - 80px) / 3.4);
+	}
+	.tl-item {
+		position: relative;
+		flex: 0 0 var(--card-w);
+		min-height: 136px;
+		padding: 30px 32px 4px 0;
+		scroll-snap-align: start;
+	}
+	/* the hairline running through every card at node level */
+	.tl-item::before {
+		content: '';
+		position: absolute;
+		top: 4px;
+		left: 0;
+		right: 0;
+		height: 1px;
+		background: var(--line);
+	}
+	.tl-item:last-child::before {
+		right: 32px;
+	}
+	/* ring node — echoes the frame's rail markers */
+	.tl-node {
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 9px;
+		height: 9px;
+		border-radius: 50%;
+		background: var(--surface);
+		box-shadow: inset 0 0 0 1px var(--line-2);
+	}
+	.tl-item.filled .tl-node {
+		box-shadow: inset 0 0 0 1px var(--brand);
+	}
+	.tl-item h3 {
+		margin: 0 0 8px;
+		font-size: 1.1rem;
+		font-weight: 500;
+		letter-spacing: -0.015em;
+	}
+	.tl-item p {
+		margin: 0;
+		color: var(--ink-3);
+		font-size: 0.94rem;
+		line-height: 1.65;
 	}
 	.h-year {
 		display: block;
-		margin-bottom: 18px;
+		margin-bottom: 14px;
 		font-size: 0.95rem;
 		font-weight: 500;
 		color: var(--brand);
@@ -271,35 +443,47 @@
 	.ph-line.short {
 		width: 46%;
 	}
+
+	/* ---------- Stack: asymmetric split ---------- */
 	.stack {
-		padding: 56px 40px;
+		display: grid;
+		grid-template-columns: 1fr 2fr;
 	}
-	.col-title {
-		margin: 0 0 20px;
-		font-size: 1.15rem;
-		font-weight: 500;
-		letter-spacing: -0.02em;
+	.stack-copy {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+		padding: 72px 40px;
 	}
-	.log {
+	.stack-list {
+		display: flex;
+		flex-direction: column;
 		list-style: none;
 		margin: 0;
 		padding: 0;
-		border-top: 1px solid var(--ink);
-	}
-	.log li {
-		display: flex;
-		align-items: baseline;
-		gap: 14px;
-		padding: 14px 0;
-		border-bottom: 1px solid var(--line);
+		border-left: 1px solid var(--line);
 	}
 	.stack-row {
-		align-items: center !important;
+		flex: 1;
+		display: flex;
+		align-items: center;
+		gap: 24px;
+		padding: 20px 40px;
+	}
+	.stack-row + .stack-row {
+		border-top: 1px solid var(--line);
+	}
+	.spec-k {
+		width: 76px;
+		flex-shrink: 0;
+		font-size: 0.86rem;
+		font-weight: 500;
+		color: var(--ink-3);
 	}
 	.icons {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 8px;
+		gap: 10px;
 	}
 	.tile {
 		display: grid;
@@ -315,14 +499,8 @@
 		width: 26px;
 		height: 26px;
 	}
-	.spec-k {
-		width: 88px;
-		flex-shrink: 0;
-		font-weight: 500;
-		font-size: 0.95rem;
-	}
 
-	/* ---------- Terminal ---------- */
+	/* ---------- Terminal: zigzag (window left, copy right) ---------- */
 	code {
 		font-family: var(--font-mono);
 		font-size: 0.9em;
@@ -332,16 +510,71 @@
 		color: var(--ink);
 	}
 	.shell {
-		padding: 0 40px 56px;
+		display: grid;
+		grid-template-columns: 2fr 1fr;
 	}
-	.shell::before,
-	.shell::after {
-		display: none;
+	.shell-win {
+		min-width: 0;
+		padding: 56px 40px;
+		border-right: 1px solid var(--line);
+	}
+	.shell-copy {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+		padding: 72px 40px 56px;
+	}
+	.cmds {
+		list-style: none;
+		margin: 16px 0 0;
+		padding: 0;
+		border-top: 1px solid var(--line);
+	}
+	.cmds li {
+		border-bottom: 1px solid var(--line);
+	}
+	.cmd {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 12px;
+		width: 100%;
+		padding: 13px 2px;
+		border: 0;
+		background: none;
+		font-family: var(--font-mono);
+		font-size: 13.5px;
+		text-align: left;
+		color: var(--ink-2);
+		cursor: pointer;
+		transition: color 0.2s ease;
+	}
+	.cmd:hover,
+	.cmd:focus-visible {
+		color: var(--ink);
+	}
+	/* return glyph is always shown so the rows read as runnable, even without hover */
+	.cmd-ret {
+		flex-shrink: 0;
+		fill: none;
+		stroke: var(--ink-4);
+		stroke-width: 1.5;
+		stroke-linecap: round;
+		stroke-linejoin: round;
+		transition:
+			stroke 0.2s ease,
+			transform 0.25s var(--ease-out);
+	}
+	.cmd:hover .cmd-ret,
+	.cmd:focus-visible .cmd-ret {
+		stroke: var(--brand);
+		transform: translateX(-3px);
 	}
 	.window {
+		container-type: inline-size;
 		border: 1px solid var(--line);
 		border-radius: 12px;
-		background: #fff;
+		background: var(--surface);
 		overflow: hidden;
 	}
 	.w-bar {
@@ -363,20 +596,26 @@
 		width: 11px;
 		height: 11px;
 		border-radius: 50%;
-		background: #e2e2e7;
+		background: var(--line-2);
 	}
+	/* One type size for the whole window. It shrinks with the window so the
+	   anafetch block (about 56.5ch wide) fits without sideways scrolling. */
 	.w-body {
-		padding: 24px 28px 28px;
-		font-size: 13px;
+		--wb-pad: 24px;
+		padding: var(--wb-pad) var(--wb-pad) 28px;
+		font-size: clamp(9px, (100cqw - 2 * var(--wb-pad)) / 56.5, 12px);
 		line-height: 1.3;
-		max-height: 720px;
+		height: 560px;
 		overflow-y: auto;
 		overflow-x: hidden;
 	}
 	.w-body :global(pre) {
 		overflow-x: auto;
+		/* AnaFetch sets a fixed rem line-height inline; keep the logo's proportions as the font scales */
+		line-height: 1.35em !important;
 	}
 	.term-host {
+		--term-fs: 1em;
 		margin-top: 24px;
 	}
 	.term-host :global(#term-scroll) {
@@ -385,6 +624,16 @@
 	.term-host :global(.term-typed) {
 		white-space: pre-wrap;
 		word-break: break-all;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.tl-track {
+			scroll-behavior: auto;
+		}
+		.tile,
+		.cmd-ret {
+			transition: none;
+		}
 	}
 
 	/* ---------- CTA ---------- */
@@ -401,14 +650,14 @@
 		text-align: center;
 		padding: 112px 24px 124px;
 		border-radius: var(--radius-lg);
-		color: #fff;
-		background: linear-gradient(180deg, #2f50e0, #1f3cc0);
+		color: var(--on-fill);
+		background: linear-gradient(180deg, var(--brand-fill), var(--brand-fill-2));
 	}
 	.cta-grain {
 		position: absolute;
 		inset: 0;
 		z-index: -1;
-		background-image: radial-gradient(rgba(255, 255, 255, 0.16) 0.8px, transparent 1.1px);
+		background-image: radial-gradient(color-mix(in srgb, var(--on-fill) 16%, transparent) 0.8px, transparent 1.1px);
 		background-size: 6px 6px;
 		mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.3), #000 85%);
 		-webkit-mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.3), #000 85%);
@@ -421,7 +670,7 @@
 		width: 90%;
 		height: 90%;
 		transform: translateX(-50%);
-		background: radial-gradient(closest-side, rgba(255, 255, 255, 0.55), rgba(140, 170, 255, 0.35) 45%, transparent);
+		background: radial-gradient(closest-side, rgba(255, 255, 255, 0.55), color-mix(in srgb, var(--accent-2) 45%, transparent) 45%, transparent);
 		filter: blur(8px);
 	}
 	.cta h2 {
@@ -433,7 +682,7 @@
 	}
 	.cta p {
 		margin: 18px 0 0;
-		color: rgba(255, 255, 255, 0.82);
+		color: color-mix(in srgb, var(--on-fill) 82%, transparent);
 	}
 	.cta-btns {
 		display: flex;
@@ -448,19 +697,6 @@
 		.cells {
 			grid-template-columns: 1fr;
 		}
-		.history {
-			grid-template-columns: 1fr 1fr;
-		}
-		.h-cell:nth-child(n) {
-			border-left: 1px solid var(--line);
-			border-top: 1px solid var(--line);
-		}
-		.h-cell:nth-child(odd) {
-			border-left: 0;
-		}
-		.h-cell:nth-child(-n + 2) {
-			border-top: 0;
-		}
 		.cell {
 			border-left: 0;
 			border-top: 1px solid var(--line);
@@ -468,11 +704,71 @@
 		.cell:first-child {
 			border-top: 0;
 		}
-		.stack {
-			padding: 48px 24px;
+		.timeline {
+			padding: 80px 0 56px;
 		}
+		.tl-head {
+			padding: 0 24px 40px;
+		}
+		.tl-track {
+			scroll-padding-inline: 24px;
+		}
+		.tl-list {
+			padding: 0 24px;
+			--card-w: calc((100cqw - 48px) / 2.4);
+		}
+		.stack,
 		.shell {
+			grid-template-columns: 1fr;
+		}
+		.stack-copy {
+			padding: 64px 24px 32px;
+		}
+		.stack-list {
+			border-left: 0;
+			border-top: 1px solid var(--line);
+		}
+		.stack-row {
+			padding: 18px 24px;
+		}
+		.shell-copy {
+			order: -1;
+			padding: 64px 24px 32px;
+		}
+		.shell-win {
 			padding: 0 24px 48px;
+			border-right: 0;
+		}
+		.cmds {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 8px;
+			margin-top: 8px;
+			border-top: 0;
+		}
+		.cmds li {
+			border-bottom: 0;
+		}
+		.cmd {
+			width: auto;
+			min-height: 38px;
+			padding: 9px 14px;
+			border: 1px solid var(--pill-border);
+			border-radius: 999px;
+			background: var(--surface);
+			font-size: 13px;
+			transition:
+				color 0.2s ease,
+				border-color 0.2s ease;
+		}
+		.cmd:hover {
+			border-color: var(--line-2);
+		}
+		.cmd:focus-visible {
+			border-radius: 999px;
+		}
+		.cmd-ret {
+			display: none;
 		}
 	}
 	@media (max-width: 640px) {
@@ -482,24 +778,49 @@
 		.cell {
 			padding: 24px 20px 28px;
 		}
-		.stack {
-			padding: 40px 20px;
+		.timeline {
+			padding: 64px 0 48px;
 		}
-		.history {
-			grid-template-columns: 1fr;
+		.tl-head {
+			padding: 0 20px 32px;
 		}
-		.h-cell:nth-child(n) {
-			border-left: 0;
-			border-top: 1px solid var(--line);
+		.tl-nav {
+			display: none;
 		}
-		.h-cell:first-child {
-			border-top: 0;
+		.tl-track {
+			scroll-padding-inline: 20px;
 		}
-		.shell {
-			padding: 0 12px 40px;
+		.tl-list {
+			padding: 0 20px;
+			--card-w: calc((100cqw - 40px) * 0.8);
+		}
+		.tl-item {
+			padding-right: 24px;
+		}
+		.tl-item:last-child::before {
+			right: 24px;
+		}
+		.stack-copy {
+			padding: 56px 20px 28px;
+		}
+		.stack-row {
+			flex-direction: column;
+			align-items: flex-start;
+			gap: 10px;
+			padding: 18px 20px;
+		}
+		.shell-copy {
+			padding: 56px 20px 28px;
+		}
+		.shell-win {
+			padding: 0 20px 40px;
 		}
 		.w-body {
-			padding: 16px;
+			--wb-pad: 16px;
+			height: auto;
+			max-height: 560px;
+			padding: var(--wb-pad);
+			/* too narrow to fit anafetch at a readable size: keep 11px and let the pre scroll */
 			font-size: 11px;
 		}
 		.cta-row {

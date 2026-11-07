@@ -37,9 +37,9 @@
 		width: min(980px, 100%);
 		border: 1px solid var(--line);
 		border-radius: 14px;
-		background: #fff;
+		background: var(--surface);
 		overflow: hidden;
-		box-shadow: 0 40px 80px -48px rgba(20, 30, 80, 0.35);
+		box-shadow: 0 40px 80px -48px color-mix(in srgb, var(--brand-deep) 35%, transparent);
 	}
 	.w-bar {
 		display: grid;
@@ -61,7 +61,7 @@
 		width: 11px;
 		height: 11px;
 		border-radius: 50%;
-		background: #e2e2e7;
+		background: var(--line-2);
 	}
 	.r {
 		justify-self: end;

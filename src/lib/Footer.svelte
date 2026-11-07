@@ -16,7 +16,7 @@
 	<div class="inner">
 		<div class="top">
 			<a class="brand" href="/" aria-label="AnA 홈">
-				<img src="/logo.svg" alt="" width="22" height="22" />
+				<svg class="f-mark" viewBox="0 0 52 52" width="22" height="22" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M52 52L31.871 0H20.129L0 52H10.9032L18.8923 28.862L26.605 52L52 52ZM39.6006 47.6667L26.8387 10.7059H25.1613L21.2164 22.131L29.7283 47.6667H39.6006Z" fill="currentColor" /></svg>
 				<span>AnA</span>
 			</a>
 			<nav aria-label="Footer">
@@ -35,6 +35,9 @@
 </footer>
 
 <style>
+	.f-mark {
+		color: var(--brand-ink);
+	}
 	footer {
 		border-top: 1px solid var(--line);
 		background: var(--surface);

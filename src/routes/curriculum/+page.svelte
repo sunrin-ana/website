@@ -1,11 +1,10 @@
-﻿<script lang="ts">
+<script lang="ts">
 	import Nav from '$lib/Nav.svelte';
 	import Footer from '$lib/Footer.svelte';
 	import { reveal } from '$lib/reveal.js';
 	import { tracks, tech } from '$lib/curriculum.js';
 
-	// pad each track's module grid to full rows of 3 so the hairlines stay tidy
-	const filler = (n: number) => (3 - (n % 3)) % 3;
+	const num = (i: number) => String(i + 1).padStart(2, '0');
 </script>
 
 <svelte:head>
@@ -19,12 +18,14 @@
 	<div class="frame">
 		<!-- ============ HERO ============ -->
 		<section class="row bare hero">
-			<h1>Curriculum</h1>
-			<p>AnA 부원들이 함께 공부하는 과정입니다.</p>
+			<div class="hero-text">
+				<h1>Curriculum</h1>
+				<p>AnA 부원들이 함께 공부하는 과정입니다.</p>
+			</div>
 			<nav class="jump" aria-label="트랙 바로가기">
 				{#each tracks as t, i}
 					<a class="jump-pill" href="#{t.id}">
-						<span class="jump-n">Track {String(i + 1).padStart(2, '0')}</span>
+						<span class="jump-n">Track {num(i)}</span>
 						{t.title.replace(' Track', '')}
 						<span class="jump-count">{t.modules.length}</span>
 					</a>
@@ -33,12 +34,13 @@
 		</section>
 
 		<!-- ============ OVERVIEW ============ -->
-		<section class="row overview">
+		<section class="row overview" aria-label="트랙 목차">
 			{#each tracks as t, i}
 				<a class="ov" href="#{t.id}">
-					<span class="ov-n">Track {String(i + 1).padStart(2, '0')}</span>
-					<h2>{t.title}</h2>
-					<p>{t.summary}</p>
+					<span class="ov-head">
+						<span class="ov-n">Track {num(i)}</span>
+						<span class="ov-title">{t.title}</span>
+					</span>
 					<ol class="ov-list">
 						{#each t.modules as m}
 							<li><span>{m.id}</span>{m.name}</li>
@@ -50,36 +52,35 @@
 
 		<!-- ============ TRACKS ============ -->
 		{#each tracks as t, i}
-			<section class="row" id={t.id}>
-				<header class="section-head reveal" use:reveal>
-					<span class="kicker">Track {String(i + 1).padStart(2, '0')}</span>
-					<h2 class="title">{t.title}</h2>
-					<p class="subtitle">{t.summary}</p>
+			<section class="row track" id={t.id} aria-labelledby="{t.id}-title">
+				<header class="track-head">
+					<div class="track-sticky reveal" use:reveal>
+						<span class="kicker">Track {num(i)}</span>
+						<h2 id="{t.id}-title">{t.title}</h2>
+						<p>{t.summary}</p>
+						<span class="track-count">모듈 {t.modules.length}개</span>
+					</div>
 				</header>
-			</section>
-			<section class="row modules">
-				{#each t.modules as m, k}
-					<article class="mod reveal" use:reveal style="--d:{(k % 3) * 0.06}s">
-						<div class="mod-top">
-							<span class="mod-n">{m.id}</span>
-							{#if k < t.modules.length - 1}<span class="mod-next" aria-hidden="true">→</span>{/if}
-						</div>
-						<h3>{m.name}</h3>
-						{#if m.tech.length}
-							<ul class="stack" aria-label="다루는 기술">
-								{#each m.tech as key}
-									<li>
-										<img src={tech[key].src} alt="" width="16" height="16" loading="lazy" />
-										{tech[key].label}
-									</li>
-								{/each}
-							</ul>
-						{/if}
-					</article>
-				{/each}
-				{#each Array(filler(t.modules.length)) as _}
-					<div class="mod mod-empty" aria-hidden="true"></div>
-				{/each}
+				<ol class="road">
+					{#each t.modules as m, k}
+						<li class="step reveal" use:reveal style="--d:{k * 0.07}s">
+							<span class="node" aria-hidden="true">{m.id}</span>
+							<div class="step-body">
+								<h3>{m.name}</h3>
+								{#if m.tech.length}
+									<ul class="stack" aria-label="다루는 기술">
+										{#each m.tech as key}
+											<li>
+												<img src={tech[key].src} alt="" width="16" height="16" loading="lazy" />
+												{tech[key].label}
+											</li>
+										{/each}
+									</ul>
+								{/if}
+							</div>
+						</li>
+					{/each}
+				</ol>
 			</section>
 		{/each}
 
@@ -98,13 +99,18 @@
 		padding-top: var(--nav-h);
 	}
 
-	/* ---------- Hero ---------- */
+	/* ---------- Hero (F-pattern: left-aligned, pills bottom-right) ---------- */
 	.hero {
 		display: flex;
-		flex-direction: column;
-		align-items: center;
-		text-align: center;
-		padding: 112px 24px 72px;
+		flex-wrap: wrap;
+		justify-content: space-between;
+		align-items: flex-end;
+		gap: 32px 40px;
+		padding: 112px 40px 72px;
+	}
+	/* never shrinks below its one-line width: the pills wrap underneath first */
+	.hero-text {
+		flex: 1 0 auto;
 	}
 	h1 {
 		margin: 0;
@@ -113,17 +119,15 @@
 		line-height: 1;
 		letter-spacing: -0.025em;
 	}
-	.hero > p {
+	.hero-text p {
 		margin: 20px 0 0;
 		font-size: clamp(1rem, 1.35vw, 1.2rem);
-		color: rgba(28, 28, 31, 0.7);
+		color: color-mix(in srgb, var(--ink) 70%, transparent);
 	}
 	.jump {
 		display: flex;
 		flex-wrap: wrap;
-		justify-content: center;
 		gap: 8px;
-		margin-top: 32px;
 	}
 	.jump-pill {
 		display: inline-flex;
@@ -131,7 +135,7 @@
 		gap: 10px;
 		height: 40px;
 		padding: 0 8px 0 16px;
-		border: 1px solid #f0f0f0;
+		border: 1px solid var(--pill-border);
 		border-radius: 999px;
 		font-size: 0.95rem;
 		font-weight: 500;
@@ -141,6 +145,9 @@
 	}
 	.jump-pill:hover {
 		border-color: var(--line-2);
+	}
+	.jump-pill:focus-visible {
+		border-radius: 999px;
 	}
 	.jump-n {
 		color: var(--brand);
@@ -157,7 +164,7 @@
 		color: var(--ink-2);
 	}
 
-	/* ---------- Overview ---------- */
+	/* ---------- Overview (split) ---------- */
 	.overview {
 		display: grid;
 		grid-template-columns: 1fr 1fr;
@@ -165,7 +172,7 @@
 	.ov {
 		display: flex;
 		flex-direction: column;
-		padding: 40px;
+		padding: 32px 40px 36px;
 		text-decoration: none;
 		color: inherit;
 		transition: background 0.2s ease;
@@ -176,26 +183,31 @@
 	.ov:hover {
 		background: var(--surface-3);
 	}
+	.ov:focus-visible {
+		border-radius: 0;
+		outline-offset: -2px;
+	}
 	.ov-n,
 	.kicker {
 		font-size: 0.9rem;
 		font-weight: 500;
 		color: var(--brand);
 	}
-	.ov h2 {
-		margin: 14px 0 8px;
-		font-size: 1.5rem;
-		font-weight: 500;
-		letter-spacing: -0.02em;
+	/* compact index: kicker + title on one line, the module list is the content */
+	.ov-head {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		gap: 4px 14px;
 	}
-	.ov > p {
-		margin: 0;
-		color: var(--ink-3);
-		line-height: 1.6;
+	.ov-title {
+		font-size: 1.15rem;
+		font-weight: 500;
+		letter-spacing: -0.015em;
 	}
 	.ov-list {
 		list-style: none;
-		margin: 28px 0 0;
+		margin: 20px 0 0;
 		padding: 0;
 		border-top: 1px solid var(--line);
 	}
@@ -211,52 +223,103 @@
 		font-variant-numeric: tabular-nums;
 	}
 
-	/* ---------- Track section ---------- */
+	/* ---------- Track (asymmetric: sticky head + roadmap) ---------- */
+	.track {
+		display: grid;
+		grid-template-columns: 11fr 13fr;
+		scroll-margin-top: var(--nav-h);
+	}
+	.track-head {
+		border-right: 1px solid var(--line);
+		padding: 64px 40px;
+	}
+	.track-sticky {
+		position: sticky;
+		top: calc(var(--nav-h) + 32px);
+	}
 	.kicker {
 		display: block;
 	}
-
-	/* ---------- Modules ---------- */
-	.modules {
-		display: grid;
-		grid-template-columns: repeat(3, 1fr);
-	}
-	.mod {
-		display: flex;
-		flex-direction: column;
-		min-height: 200px;
-		padding: 28px 28px 32px;
-		border-left: 1px solid var(--line);
-	}
-	.mod:nth-child(3n + 1) {
-		border-left: 0;
-	}
-	.mod:nth-child(n + 4) {
-		border-top: 1px solid var(--line);
-	}
-	.mod-empty {
-		background-image: radial-gradient(var(--gutter-dot) 0.7px, transparent 0.9px);
-		background-size: 6px 6px;
-	}
-	.mod-top {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-	}
-	.mod-n {
-		font-size: 0.95rem;
+	.track-head h2 {
+		margin: 14px 0 0;
+		font-size: clamp(1.5rem, 2.3vw, 2rem);
 		font-weight: 500;
-		color: var(--brand);
+		line-height: 1.15;
+		letter-spacing: -0.025em;
+	}
+	.track-head p {
+		margin: 16px 0 0;
+		line-height: 1.6;
+		color: color-mix(in srgb, var(--ink) 70%, transparent);
+	}
+	.track-count {
+		display: block;
+		margin-top: 24px;
+		font-size: 0.9rem;
+		color: var(--ink-3);
+	}
+
+	/* roadmap */
+	.road {
+		--node: 34px;
+		list-style: none;
+		margin: 0;
+		padding: 64px 40px 64px 48px;
+	}
+	.step {
+		position: relative;
+		display: grid;
+		grid-template-columns: var(--node) 1fr;
+		column-gap: 24px;
+		padding-bottom: 44px;
+	}
+	.step:last-child {
+		padding-bottom: 0;
+	}
+	/* connector line: from this node's centre to the next node */
+	.step:not(:last-child)::before {
+		content: '';
+		position: absolute;
+		left: calc(var(--node) / 2 - 0.5px);
+		top: calc(var(--node) / 2);
+		bottom: calc(var(--node) / -2);
+		width: 1px;
+		background: var(--line-2);
+	}
+	.node {
+		position: relative;
+		z-index: 1;
+		display: grid;
+		place-items: center;
+		width: var(--node);
+		height: var(--node);
+		border: 1px solid var(--line-2);
+		border-radius: 50%;
+		background: var(--surface);
+		font-size: 0.85rem;
+		font-weight: 500;
+		color: var(--ink-3);
 		font-variant-numeric: tabular-nums;
+		transition:
+			border-color 0.2s ease,
+			color 0.2s ease,
+			background-color 0.2s ease;
 	}
-	.mod-next {
-		color: var(--ink-4);
+	.step:first-child .node,
+	.step:hover .node {
+		border-color: var(--brand-line);
+		background: var(--brand-soft);
+		color: var(--brand);
 	}
-	.mod h3 {
-		margin: 40px 0 0;
+	.step-body {
+		min-width: 0;
+		padding-top: calc((var(--node) - 1.2rem * 1.35) / 2);
+	}
+	.step h3 {
+		margin: 0;
 		font-size: 1.2rem;
 		font-weight: 500;
-		line-height: 1.3;
+		line-height: 1.35;
 		letter-spacing: -0.015em;
 	}
 	.stack {
@@ -264,8 +327,8 @@
 		display: flex;
 		flex-wrap: wrap;
 		gap: 6px;
-		margin: auto 0 0;
-		padding: 20px 0 0;
+		margin: 14px 0 0;
+		padding: 0;
 	}
 	.stack li {
 		display: inline-flex;
@@ -273,7 +336,7 @@
 		gap: 6px;
 		height: 30px;
 		padding: 0 10px;
-		border: 1px solid #f0f0f0;
+		border: 1px solid var(--pill-border);
 		border-radius: 999px;
 		font-size: 0.85rem;
 		color: var(--ink-2);
@@ -297,30 +360,31 @@
 		color: var(--ink-2);
 	}
 
+	@media (prefers-reduced-motion: reduce) {
+		.node {
+			transition: none;
+		}
+	}
+
 	/* ---------- Responsive ---------- */
 	@media (max-width: 960px) {
+		/* the hero pills already index the tracks and every module follows
+		   right below, so the overview would only repeat itself here */
 		.overview {
+			display: none;
+		}
+		.track {
 			grid-template-columns: 1fr;
 		}
-		.ov + .ov {
-			border-left: 0;
-			border-top: 1px solid var(--line);
+		.track-head {
+			border-right: 0;
+			padding: 56px 40px 0;
 		}
-		.modules {
-			grid-template-columns: 1fr 1fr;
+		.track-sticky {
+			position: static;
 		}
-		.mod:nth-child(n) {
-			border-left: 1px solid var(--line);
-			border-top: 1px solid var(--line);
-		}
-		.mod:nth-child(odd) {
-			border-left: 0;
-		}
-		.mod:nth-child(-n + 2) {
-			border-top: 0;
-		}
-		.mod-empty {
-			display: none;
+		.road {
+			padding: 40px 40px 56px;
 		}
 	}
 	@media (max-width: 640px) {
@@ -330,22 +394,22 @@
 		.ov {
 			padding: 32px 20px;
 		}
-		.modules {
-			grid-template-columns: 1fr;
+		.track-head {
+			padding: 48px 20px 0;
 		}
-		.mod:nth-child(n) {
-			border-left: 0;
-			border-top: 1px solid var(--line);
+		.track-head h2 {
+			font-size: 1.6rem;
 		}
-		.mod:first-child {
-			border-top: 0;
+		.road {
+			--node: 30px;
+			padding: 32px 20px 48px;
 		}
-		.mod {
-			min-height: 0;
-			padding: 24px 20px 28px;
+		.step {
+			column-gap: 16px;
+			padding-bottom: 36px;
 		}
-		.mod h3 {
-			margin-top: 20px;
+		.step h3 {
+			font-size: 1.1rem;
 		}
 		.note {
 			padding: 32px 20px;

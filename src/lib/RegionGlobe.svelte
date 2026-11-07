@@ -9,12 +9,14 @@
 	import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 	import earthLandMask from '$lib/earth-land-mask.json';
 	import { pois, links } from '$lib/globe-data.js';
+	import { cssColor, onThemeChange } from '$lib/theme.js';
 
+	// colours default to the current theme (see theme.js); pass any of these to pin one
 	let {
-		color = '#2f50e0',
-		arcColor = '#3f62f2',
-		lineColor = '#ececf0',
-		background = '#ffffff'
+		color,
+		arcColor,
+		lineColor,
+		background
 	}: { color?: string; arcColor?: string; lineColor?: string; background?: string } = $props();
 
 	const LOGO =
@@ -67,7 +69,7 @@
 		host.appendChild(renderer.domElement);
 
 		const scene = new THREE.Scene();
-		const fog = new THREE.Fog(background, 2, 4);
+		const fog = new THREE.Fog('#ffffff', 2, 4);
 		scene.fog = fog;
 
 		const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 50);
@@ -106,7 +108,7 @@
 		sq.lineTo(-h, -h + c);
 		sq.quadraticCurveTo(-h, -h, -h + c, -h);
 		const dotGeo = new THREE.ShapeGeometry(sq, 2);
-		const dotMat = new THREE.MeshBasicMaterial({ color, side: THREE.DoubleSide, transparent: true });
+		const dotMat = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, transparent: true });
 		const dots = new THREE.InstancedMesh(dotGeo, dotMat, pts.length);
 		const dummy = new THREE.Object3D();
 		pts.forEach((p, k) => {
@@ -119,7 +121,7 @@
 		globe.add(dots);
 
 		/* ---------- graticule ---------- */
-		const lineMat = new THREE.LineBasicMaterial({ color: lineColor });
+		const lineMat = new THREE.LineBasicMaterial();
 		const lineGeos: THREE.BufferGeometry[] = [];
 		const addLine = (arr: THREE.Vector3[]) => {
 			const g = new THREE.BufferGeometry().setFromPoints(arr);
@@ -150,8 +152,9 @@
 		/* ---------- arcs ---------- */
 		type Arc = { mesh: THREE.Mesh; a: number; b: number; s: number; e: number; on: boolean };
 		const arcs: Arc[] = [];
+		let arcTint = '#4f6df5';
 		const arcMat = () =>
-			new THREE.MeshBasicMaterial({ color: arcColor, transparent: true, opacity: 0, depthWrite: false });
+			new THREE.MeshBasicMaterial({ color: arcTint, transparent: true, opacity: 0, depthWrite: false });
 		const makeArc = (ai: number, bi: number) => {
 			const u = wc(items[ai].lat, items[ai].lon, 1),
 				v = wc(items[bi].lat, items[bi].lon, 1);
@@ -383,7 +386,17 @@
 		const onMQ = () => resize();
 		mobileQ.addEventListener('change', onMQ);
 
+		/* ---------- theme ---------- */
+		const offTheme = onThemeChange(() => {
+			dotMat.color.set(color ?? cssColor('var(--brand)'));
+			arcTint = arcColor ?? cssColor('var(--accent-2)');
+			arcs.forEach((a) => (a.mesh.material as THREE.MeshBasicMaterial).color.set(arcTint));
+			lineMat.color.set(lineColor ?? cssColor('color-mix(in srgb, var(--line) 75%, var(--surface))'));
+			fog.color.set(background ?? cssColor('var(--surface)'));
+		});
+
 		return () => {
+			offTheme();
 			cancelAnimationFrame(raf);
 			ro.disconnect();
 			io.disconnect();
@@ -403,7 +416,7 @@
 	});
 </script>
 
-<div class="region" class:ready bind:this={wrap} style="--c:{color}">
+<div class="region" class:ready bind:this={wrap} style={color ? `--c:${color}` : undefined}>
 	<div class="gl" bind:this={host}></div>
 
 	<div class="layer pins" aria-hidden="true">
@@ -446,6 +459,7 @@
 
 <style>
 	.region {
+		--c: var(--brand);
 		position: relative;
 		width: 100%;
 		height: 500px;
@@ -499,7 +513,7 @@
 		place-items: center;
 		border-radius: 50%;
 		border: 1px solid var(--c);
-		background: rgba(255, 255, 255, 0.9);
+		background: color-mix(in srgb, var(--surface) 90%, transparent);
 		color: var(--c);
 		backdrop-filter: blur(4px);
 		-webkit-backdrop-filter: blur(4px);
@@ -510,9 +524,9 @@
 			transform 0.2s ease;
 	}
 	.pin.filled {
-		border-color: #fff;
+		border-color: var(--surface);
 		background: color-mix(in srgb, var(--c) 90%, transparent);
-		color: #fff;
+		color: var(--on-brand);
 	}
 	.pin svg {
 		width: 24px;
@@ -537,7 +551,7 @@
 		width: 240px;
 		padding: 12px;
 		border: 1px dashed var(--c);
-		background: rgba(255, 255, 255, 0.8);
+		background: color-mix(in srgb, var(--surface) 80%, transparent);
 		backdrop-filter: blur(4px);
 		-webkit-backdrop-filter: blur(4px);
 		opacity: 0;
@@ -563,7 +577,7 @@
 		margin: 0;
 		font-size: 0.875rem;
 		line-height: 1.45;
-		color: rgba(28, 28, 31, 0.7);
+		color: color-mix(in srgb, var(--ink) 70%, transparent);
 	}
 	.br {
 		position: absolute;

@@ -359,8 +359,7 @@
 <style>
 	.why {
 		--accent: var(--brand);
-		--accent-2: #4f6df5;
-		--accent-ink: #1b2c8f;
+		--accent-ink: var(--brand-deep);
 	}
 
 	/* ---------- heading ---------- */
@@ -384,7 +383,7 @@
 		margin: 16px 0 0;
 		font-size: clamp(1rem, 1.35vw, 1.2rem);
 		line-height: 1.5;
-		color: rgba(28, 28, 31, 0.7);
+		color: color-mix(in srgb, var(--ink) 70%, transparent);
 	}
 	.pill {
 		position: relative;
@@ -441,15 +440,20 @@
 		overflow: hidden;
 		mix-blend-mode: multiply;
 	}
+	@media (prefers-color-scheme: dark) {
+		.pill {
+			mix-blend-mode: screen;
+		}
+	}
 	.pill-noise span {
 		position: absolute;
 		inset: 0 auto 0 0;
 		width: 200%;
 		background-image:
-			radial-gradient(55% 70% at 0% 28%, rgba(110, 140, 255, 0.2), transparent 70%),
-			radial-gradient(55% 70% at 100% 28%, rgba(110, 140, 255, 0.2), transparent 70%),
-			radial-gradient(55% 65% at 50% 72%, rgba(30, 60, 200, 0.14), rgba(30, 60, 200, 0.01) 70%),
-			radial-gradient(40% 60% at 50% 45%, rgba(60, 90, 230, 0.05), rgba(30, 60, 200, 0.01) 75%);
+			radial-gradient(55% 70% at 0% 28%, color-mix(in srgb, var(--accent-2) 20%, transparent), transparent 70%),
+			radial-gradient(55% 70% at 100% 28%, color-mix(in srgb, var(--accent-2) 20%, transparent), transparent 70%),
+			radial-gradient(55% 65% at 50% 72%, color-mix(in srgb, var(--brand-deep) 14%, transparent), color-mix(in srgb, var(--brand-deep) 1%, transparent) 70%),
+			radial-gradient(40% 60% at 50% 45%, color-mix(in srgb, var(--brand) 5%, transparent), color-mix(in srgb, var(--brand-deep) 1%, transparent) 75%);
 		background-size: 50% 100%;
 		background-repeat: repeat-x;
 		animation: noise-drift 2s linear infinite;
@@ -502,11 +506,11 @@
 	}
 	.left {
 		border-right: 1px solid var(--line);
-		color: #262626;
+		color: var(--ink);
 	}
 	.right {
-		background: var(--accent);
-		color: #fff;
+		background: var(--brand-fill);
+		color: var(--on-fill);
 		box-shadow:
 			inset 1px 6px 6px 0 rgba(255, 255, 255, 0.2),
 			inset 0 0 0 0 rgba(255, 255, 255, 0.35),
@@ -575,7 +579,7 @@
 	.card {
 		position: relative;
 		border-radius: 8px;
-		background: #fdfdfc;
+		background: var(--card);
 	}
 	.dash {
 		position: absolute;
@@ -590,7 +594,7 @@
 		width: calc(100% - 1px);
 		height: calc(100% - 1px);
 		fill: none;
-		stroke: #ececf0;
+		stroke: var(--line);
 		stroke-width: 1;
 		stroke-dasharray: 8 8;
 		stroke-linecap: round;
@@ -643,10 +647,10 @@
 		letter-spacing: -0.04em;
 	}
 	.t {
-		color: #262626;
+		color: var(--ink);
 	}
 	.d {
-		color: #8a8a90;
+		color: var(--ink-3);
 	}
 
 	/* right: dotted rail + toast */
@@ -670,7 +674,7 @@
 	.dots-row i {
 		width: 2px;
 		aspect-ratio: 1;
-		background: rgba(255, 255, 255, 0.3);
+		background: color-mix(in srgb, var(--on-fill) 30%, transparent);
 	}
 	@keyframes marquee {
 		from {
@@ -697,10 +701,10 @@
 		margin-top: 10%;
 		padding: 16px;
 		border-radius: 12px;
-		border: 1px solid rgba(255, 255, 255, 0.2);
+		border: 1px solid color-mix(in srgb, var(--on-fill) 20%, transparent);
 		background: color-mix(in srgb, var(--accent-2) 50%, transparent);
 		backdrop-filter: blur(1px);
-		color: #fff;
+		color: var(--on-fill);
 		font-size: 1.05rem;
 		white-space: nowrap;
 	}

@@ -182,23 +182,23 @@
     }
 
     .aflc {
-        color: #334882;
+        color: var(--brand-ink);
     }
 
     .aftg {
-        color: #5F6987;
+        color: var(--ink-3);
     }
 
     .aflg {
-        color: limegreen;
+        color: light-dark(#1f9d55, #5fe39a);
     }
 
     .aflb {
-        color: blue;
+        color: var(--brand);
     }
 
     .effect {
-      color: #B45A00;
+      color: light-dark(#b45a00, #f5a65b);
     }
 </style>
 

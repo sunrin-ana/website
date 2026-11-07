@@ -3,6 +3,7 @@
 	let termInput = '';
 	let termHistory: { cmd: string; lines: string[]; art?: boolean; path: string }[] = [];
 	let termInputEl: HTMLInputElement;
+	let inputLineEl: HTMLDivElement;
 	let cursorPos = 0;
 	let cwd = '/';
 
@@ -180,16 +181,39 @@
 		}
 
 		termHistory = [...termHistory, { cmd: raw, lines, art, path: currentPath }];
-		tick().then(() => {
-			termInputEl?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-		});
+		tick().then(() => scrollToInput('end'));
+	}
+
+	/* Scroll only the terminal's own scroll container (never the page). */
+	function scrollBox(): HTMLElement | null {
+		let el = inputLineEl?.parentElement ?? null;
+		while (el) {
+			const oy = getComputedStyle(el).overflowY;
+			if (oy === 'auto' || oy === 'scroll') return el;
+			el = el.parentElement;
+		}
+		return null;
+	}
+
+	function scrollToInput(mode: 'end' | 'nearest') {
+		const box = scrollBox();
+		if (!box || !inputLineEl) return;
+		const behavior: ScrollBehavior = matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
+		if (mode === 'end') {
+			box.scrollTo({ top: box.scrollHeight, behavior });
+			return;
+		}
+		const b = box.getBoundingClientRect();
+		const r = inputLineEl.getBoundingClientRect();
+		if (r.bottom > b.bottom) box.scrollBy({ top: r.bottom - b.bottom, behavior });
+		else if (r.top < b.top) box.scrollBy({ top: r.top - b.top, behavior });
 	}
 
 	function syncCursor() {
 		tick().then(() => {
 			if (termInputEl) {
 				cursorPos = termInputEl.selectionStart ?? termInput.length;
-				termInputEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+				scrollToInput('nearest');
 			}
 		});
 	}
@@ -206,7 +230,15 @@
 
 	export function focus() {
 		termInputEl?.focus({ preventScroll: true });
-		termInputEl?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+		scrollToInput('nearest');
+	}
+
+	/** Run a command exactly as if it had been typed, then focus the prompt. */
+	export function run(cmd: string) {
+		execCommand(cmd);
+		termInput = '';
+		cursorPos = 0;
+		termInputEl?.focus({ preventScroll: true });
 	}
 </script>
 
@@ -221,7 +253,7 @@
 			{/each}
 		</div>
 	{/each}
-	<div class="type-prompt term-input-line" role="textbox" tabindex="0" onclick={() => { termInputEl.focus(); syncCursor(); }} onkeydown={() => termInputEl.focus()}>
+	<div bind:this={inputLineEl} class="type-prompt term-input-line" role="textbox" tabindex="0" onclick={() => { termInputEl.focus({ preventScroll: true }); syncCursor(); }} onkeydown={() => termInputEl.focus({ preventScroll: true })}>
 		<span class="p-user">sunrin@ana</span><span class="p-sep">:</span><span class="p-path">{cwd === '/' ? '~' : '~' + cwd}</span><span class="p-dollar">$</span>&nbsp;<span class="term-typed">{termInput.slice(0, cursorPos)}<span class="term-cur blink">{termInput[cursorPos] ?? '\u00a0'}</span>{termInput.slice(cursorPos + 1)}</span>
 	</div>
 	<input
@@ -237,19 +269,23 @@
 
 <style>
 	.term-step {
+		/* keeps the hidden input inside the scroll container so the browser's
+		   own caret-into-view scrolling stays within the terminal */
+		position: relative;
 		width: 100%;
 		max-width: 100%;
 		font-family: 'SFMono-Terminal', 'IBM Plex Mono', Menlo, Monaco, Consolas, 'Courier New', monospace;
 	}
 	.type-prompt {
-		font-size: clamp(0.75rem, 1.8vw, 1rem);
-		color: #555;
+		/* hosts can set --term-fs (e.g. 1em) so prompt/output match the surrounding window */
+		font-size: var(--term-fs, clamp(0.75rem, 1.8vw, 1rem));
+		color: var(--ink-3);
 		margin-bottom: 0.75rem;
 	}
-	.p-user  { color: #2e7d32; font-weight: 800; letter-spacing: -1px;}
-	.p-sep   { color: #555; letter-spacing: -1px;}
-	.p-path  { color: #1565c0; font-weight: 700; }
-	.p-dollar { color: #333; }
+	.p-user  { color: light-dark(#2e7d32, #6fdc8c); font-weight: 800; letter-spacing: -1px;}
+	.p-sep   { color: var(--ink-3); letter-spacing: -1px;}
+	.p-path  { color: var(--brand); font-weight: 700; }
+	.p-dollar { color: var(--ink-2); }
 	.blink { animation: blink 1s step-end infinite; }
 	@keyframes blink { 50% { opacity: 0; } }
 
@@ -262,14 +298,14 @@
 	}
 	.term-input-line { cursor: text; margin-bottom: 0; }
 	.term-typed { white-space: pre; }
-	.term-cur { background: #333; color: #f5f5f5; }
+	.term-cur { background: var(--ink); color: var(--surface); }
 	.term-output {
 		white-space: pre-line;
-		font-size: clamp(0.75rem, 1.8vw, 1rem);
-		color: #444;
+		font-size: var(--term-fs, clamp(0.75rem, 1.8vw, 1rem));
+		color: var(--ink-2);
 		margin-bottom: 0.75rem;
 		padding-left: 0.5rem;
-		border-left: 2px solid #ddd;
+		border-left: 2px solid var(--line-2);
 		line-height: 1.6;
 	}
 	.term-output.art {
