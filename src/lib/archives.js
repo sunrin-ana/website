@@ -8,6 +8,7 @@
  * theme:    카드 배경 그라디언트 [시작색, 끝색]
  * url:      서비스 주소 (없으면 null)
  * featured: true 이면 /archives 상단 대형 타일로 노출
+ * summary:  /archives 목록에 보일 한 줄 설명 (없으면 description 사용)
  *
  * ── 상세 페이지(/archives/<id>)용 선택 항목 ──
  * repo:       소스 코드 주소 (없으면 생략)
@@ -31,6 +32,7 @@
  *   url: string | null,
  *   theme: [string, string],
  *   featured?: boolean,
+ *   summary?: string,
  *   repo?: string,
  *   overview?: string[],
  *   screens?: { desktop?: string, mobile?: string, desktopDark?: string, mobileDark?: string },
@@ -43,7 +45,8 @@ export const archives = [
 	{
 		id: 'ana-st',
 		name: 'ana.st',
-		tagline: 'AnA의 얼굴, 공식 웹사이트.',
+		tagline: 'AnA 공식 웹사이트.',
+		summary: '동아리 공식 홈페이지.',
 		description: '동아리 소개, 아카이브, 지원 안내까지. SvelteKit과 Cloudflare 위에서 동작합니다.',
 		category: 'internal',
 		status: 'live',

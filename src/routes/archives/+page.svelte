@@ -2,6 +2,8 @@
 	import Nav from '$lib/Nav.svelte';
 	import Footer from '$lib/Footer.svelte';
 	import { reveal } from '$lib/reveal.js';
+	import Phone from '$lib/devices/Phone.svelte';
+	import Screen from '$lib/devices/Screen.svelte';
 	import { archives, categoryLabels, statusLabels } from '$lib/archives.js';
 
 	type Filter = 'all' | 'member' | 'internal';
@@ -23,7 +25,7 @@
 			.filter((a) => {
 				const q = query.trim().toLowerCase();
 				if (!q) return true;
-				return [a.name, a.tagline, a.description, ...a.stack, ...a.makers]
+				return [a.name, a.tagline, a.description, a.summary ?? '', ...a.stack, ...a.makers]
 					.join(' ')
 					.toLowerCase()
 					.includes(q);
@@ -70,7 +72,18 @@
 								<a class="text-link" href="/archives/{item.id}" aria-label="{item.name} 자세히 보기">자세히 보기 →</a>
 							</div>
 						</div>
-						<div class="app-icon" aria-hidden="true"><svg viewBox="0 0 52 52"><path fill-rule="evenodd" clip-rule="evenodd" d="M52 52L31.871 0H20.129L0 52H10.9032L18.8923 28.862L26.605 52L52 52ZM39.6006 47.6667L26.8387 10.7059H25.1613L21.2164 22.131L29.7283 47.6667H39.6006Z" fill="#fff"/></svg></div>
+						<div class="tile-device" aria-hidden="true">
+							<Phone>
+								<Screen
+									src={item.screens?.mobile}
+									srcDark={item.screens?.mobileDark}
+									name={item.name}
+									theme={item.theme}
+									mark={item.category === 'internal'}
+									eager
+								/>
+							</Phone>
+						</div>
 					</article>
 				{/each}
 			</section>
@@ -111,15 +124,23 @@
 					{#each list as item (item.id)}
 						<li class="r" id="list-{item.id}">
 							<div class="r-main">
-								<div class="thumb" style="--from:{item.theme[0]}; --to:{item.theme[1]}">
-									{#if item.category === 'internal'}<svg viewBox="0 0 52 52"><path fill-rule="evenodd" clip-rule="evenodd" d="M52 52L31.871 0H20.129L0 52H10.9032L18.8923 28.862L26.605 52L52 52ZM39.6006 47.6667L26.8387 10.7059H25.1613L21.2164 22.131L29.7283 47.6667H39.6006Z" fill="#fff"/></svg>{:else}{item.name.slice(0, 1)}{/if}
+								<div class="thumb" aria-hidden="true">
+									<Phone>
+										<Screen
+											src={item.screens?.mobile}
+											srcDark={item.screens?.mobileDark}
+											name={item.name}
+											theme={item.theme}
+											mark={item.category === 'internal'}
+										/>
+									</Phone>
 								</div>
 								<div>
 									<div class="r-title">
 										<h3><a class="r-link" href="/archives/{item.id}">{item.name}</a></h3>
 										<span class="status status-{item.status}">{statusLabels[item.status]}</span>
 									</div>
-									<p>{item.description}</p>
+									<p>{item.summary ?? item.description}</p>
 									{#if item.makers.length}
 										<span class="makers">by {item.makers.join(', ')}</span>
 									{/if}
@@ -247,30 +268,21 @@
 		align-items: center;
 		gap: 18px;
 		margin-top: 22px;
+		margin-bottom: 40px;
 	}
-	.app-icon {
+	/* phone mockup rising from the bottom edge of the tile (cropped by overflow) */
+	.tile-device {
+		--w: 236px;
 		margin-top: auto;
-		transform: translateY(28%);
-		width: 220px;
+		width: var(--w);
+		height: calc(var(--w) * 1.22); /* visible part; the rest is clipped by the tile */
 		flex-shrink: 0;
-		aspect-ratio: 1;
-		border-radius: 50px;
-		background: linear-gradient(160deg, var(--from), var(--to));
-		display: grid;
-		place-items: center;
-		box-shadow:
-			inset 0 1px 0 rgba(255, 255, 255, 0.35),
-			inset 0 -20px 40px rgba(0, 0, 0, 0.12),
-			0 40px 60px -30px color-mix(in srgb, var(--to) 70%, transparent);
+	}
+	.tile-device :global(.phone) {
 		transition: transform 0.7s var(--ease-out);
 	}
-	.tile:hover .app-icon {
-		transform: translateY(20%);
-	}
-	.app-icon :global(svg) {
-		width: 44%;
-		transform: translateY(-18%);
-		filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.18));
+	.tile:hover .tile-device :global(.phone) {
+		transform: translateY(-10px);
 	}
 	.tile-desc {
 		display: none;
@@ -307,17 +319,13 @@
 		.lead .tile-links {
 			margin-top: 28px;
 		}
-		.lead .app-icon {
+		.lead .tile-device {
+			--w: clamp(220px, 21vw, 300px);
 			position: absolute;
-			right: 7%;
+			right: 64px;
 			bottom: 0;
 			margin: 0;
-			width: clamp(240px, 26vw, 320px);
-			border-radius: 22.5%;
-			transform: translateY(24%);
-		}
-		.tile.lead:hover .app-icon {
-			transform: translateY(17%);
+			height: calc(var(--w) * 1.3);
 		}
 	}
 	@media (min-width: 961px) {
@@ -485,26 +493,20 @@
 	}
 	.r-main {
 		display: flex;
-		gap: 18px;
-		align-items: flex-start;
+		gap: 20px;
+		align-items: center;
 	}
+	/* list thumbnail: the top of a phone, fading out toward the row's bottom */
 	.thumb {
 		flex-shrink: 0;
-		width: 56px;
-		height: 56px;
-		border-radius: 14px;
-		background: linear-gradient(160deg, var(--from), var(--to));
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		color: #fff;
-		font-weight: 500;
-		font-size: 1.3rem;
-		letter-spacing: -0.03em;
-		box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+		width: 84px;
+		height: 124px;
+		overflow: hidden;
+		-webkit-mask-image: linear-gradient(180deg, #000 72%, transparent);
+		mask-image: linear-gradient(180deg, #000 72%, transparent);
 	}
-	.thumb :global(svg) {
-		width: 48%;
+	.thumb :global(.phone) {
+		box-shadow: inset 0 0 0 1.5px light-dark(#34343a, #55565e);
 	}
 	.r-title {
 		display: flex;
@@ -662,7 +664,7 @@
 		}
 		.r-stack {
 			grid-column: 1 / -1;
-			padding-left: 74px;
+			padding-left: 104px;
 		}
 		.browse {
 			padding: 56px 24px 72px;
@@ -688,9 +690,12 @@
 			min-height: 460px;
 			padding: 36px 20px 0;
 		}
-		.app-icon {
-			width: 190px;
-			border-radius: 44px;
+		.tile-device {
+			--w: 200px;
+		}
+		.thumb {
+			width: 64px;
+			height: 96px;
 		}
 		.browse {
 			padding: 48px 20px 64px;
