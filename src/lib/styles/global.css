@@ -4,21 +4,21 @@
 
 /* =========================================================
    Theme — light by default; dark follows prefers-color-scheme
-   (the browser / OS setting). AnA blue stays the exact hex in light.
+   (the browser / OS setting). AnA blue (#334882) stays the exact hex in light.
    ========================================================= */
 :root {
 	color-scheme: light;
 
 	/* brand (AnA default) */
-	--brand: #2f50e0;
-	--brand-2: #3d5ef0;
-	--brand-deep: #1b2c8f;
+	--brand: #334882;
+	--brand-2: #3d5592; /* hover */
+	--brand-deep: #24335e;
 	--brand-ink: #334882;
-	--brand-soft: #eef1fd;
-	--brand-line: #c9d3fa;
+	--brand-soft: #eef0f6;
+	--brand-line: #c9d0e2;
 	--brand-fill: var(--brand); /* large brand panels */
-	--brand-fill-2: #1f3cc0; /* gradient end of brand panels */
-	--accent-2: #4f6df5; /* secondary accent: waveform, toast, arcs */
+	--brand-fill-2: #2b3d70; /* gradient end of brand panels */
+	--accent-2: #334882; /* secondary accent: waveform, toast, arcs */
 	--on-brand: #ffffff;
 	--on-fill: #ffffff; /* text on large brand panels */
 	--logo-ink: var(--brand-ink); /* home halftone mark */

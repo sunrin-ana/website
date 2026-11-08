@@ -152,7 +152,7 @@
 		/* ---------- arcs ---------- */
 		type Arc = { mesh: THREE.Mesh; a: number; b: number; s: number; e: number; on: boolean };
 		const arcs: Arc[] = [];
-		let arcTint = '#4f6df5';
+		let arcTint = '#334882';
 		const arcMat = () =>
 			new THREE.MeshBasicMaterial({ color: arcTint, transparent: true, opacity: 0, depthWrite: false });
 		const makeArc = (ai: number, bi: number) => {
