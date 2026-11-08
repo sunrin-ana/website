@@ -3,8 +3,6 @@
 	import Footer from '$lib/Footer.svelte';
 	import RegionGlobe from '$lib/RegionGlobe.svelte';
 	import WhyAnA from '$lib/WhyAnA.svelte';
-	import AnaFetch from '$lib/AnaFetch.svelte';
-	import Terminal from '$lib/Terminal.svelte';
 	import Icon from '$lib/Icon.svelte';
 	import { reveal } from '$lib/reveal.js';
 	import { history } from '$lib/history.js';
@@ -54,9 +52,6 @@
 		return () => ro.disconnect();
 	});
 
-	/* ---------- terminal: clickable commands ---------- */
-	let term: Terminal | undefined = $state();
-	const commands = ['help', 'whoami', 'ls', 'cat /ana/motto.txt', 'cat /contact.json'];
 </script>
 
 <svelte:head>
@@ -156,39 +151,6 @@
 			</ul>
 		</section>
 
-		<!-- ============ TERMINAL (zigzag: window left, text right) ============ -->
-		<section class="row shell">
-			<div class="shell-win">
-				<div class="window">
-					<div class="w-bar">
-						<span class="lights"><i></i><i></i><i></i></span>
-						<span>sunrin@ana: ~</span>
-						<span></span>
-					</div>
-					<div class="w-body">
-						<AnaFetch />
-						<div class="term-host">
-							<Terminal bind:this={term} />
-						</div>
-					</div>
-				</div>
-			</div>
-			<div class="shell-copy reveal" use:reveal>
-				<h2 class="title">AnA 터미널</h2>
-				<p class="subtitle"><code>help</code>를 입력하면 사용할 수 있는 명령어를 볼 수 있습니다.</p>
-				<ul class="cmds">
-					{#each commands as c}
-						<li>
-							<button type="button" class="cmd" onclick={() => term?.run(c)}>
-								<span>{c}</span>
-								<svg class="cmd-ret" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M12.5 3.5v4.5a1.5 1.5 0 0 1-1.5 1.5H4M6.5 7 4 9.5 6.5 12" /></svg>
-							</button>
-						</li>
-					{/each}
-				</ul>
-			</div>
-		</section>
-
 		<!-- ============ CTA ============ -->
 		<section class="row cta-row">
 			<div class="cta">
@@ -282,8 +244,7 @@
 
 	/* ---------- Shared: left-aligned section copy ---------- */
 	.tl-copy .subtitle,
-	.stack-copy .subtitle,
-	.shell-copy .subtitle {
+	.stack-copy .subtitle {
 		color: color-mix(in srgb, var(--ink) 68%, transparent);
 	}
 
@@ -500,138 +461,11 @@
 		height: 26px;
 	}
 
-	/* ---------- Terminal: zigzag (window left, copy right) ---------- */
-	code {
-		font-family: var(--font-mono);
-		font-size: 0.9em;
-		padding: 1px 6px;
-		border-radius: 5px;
-		background: var(--surface-2);
-		color: var(--ink);
-	}
-	.shell {
-		display: grid;
-		grid-template-columns: 2fr 1fr;
-	}
-	.shell-win {
-		min-width: 0;
-		padding: 56px 40px;
-		border-right: 1px solid var(--line);
-	}
-	.shell-copy {
-		display: flex;
-		flex-direction: column;
-		gap: 16px;
-		padding: 72px 40px 56px;
-	}
-	.cmds {
-		list-style: none;
-		margin: 16px 0 0;
-		padding: 0;
-		border-top: 1px solid var(--line);
-	}
-	.cmds li {
-		border-bottom: 1px solid var(--line);
-	}
-	.cmd {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: 12px;
-		width: 100%;
-		padding: 13px 2px;
-		border: 0;
-		background: none;
-		font-family: var(--font-mono);
-		font-size: 13.5px;
-		text-align: left;
-		color: var(--ink-2);
-		cursor: pointer;
-		transition: color 0.2s ease;
-	}
-	.cmd:hover,
-	.cmd:focus-visible {
-		color: var(--ink);
-	}
-	/* return glyph is always shown so the rows read as runnable, even without hover */
-	.cmd-ret {
-		flex-shrink: 0;
-		fill: none;
-		stroke: var(--ink-4);
-		stroke-width: 1.5;
-		stroke-linecap: round;
-		stroke-linejoin: round;
-		transition:
-			stroke 0.2s ease,
-			transform 0.25s var(--ease-out);
-	}
-	.cmd:hover .cmd-ret,
-	.cmd:focus-visible .cmd-ret {
-		stroke: var(--brand);
-		transform: translateX(-3px);
-	}
-	.window {
-		container-type: inline-size;
-		border: 1px solid var(--line);
-		border-radius: 12px;
-		background: var(--surface);
-		overflow: hidden;
-	}
-	.w-bar {
-		display: grid;
-		grid-template-columns: 1fr auto 1fr;
-		align-items: center;
-		height: 38px;
-		padding: 0 14px;
-		border-bottom: 1px solid var(--line);
-		background: var(--surface-3);
-		font-size: 12px;
-		color: var(--ink-3);
-	}
-	.lights {
-		display: flex;
-		gap: 7px;
-	}
-	.lights i {
-		width: 11px;
-		height: 11px;
-		border-radius: 50%;
-		background: var(--line-2);
-	}
-	/* One type size for the whole window. It shrinks with the window so the
-	   anafetch block (about 56.5ch wide) fits without sideways scrolling. */
-	.w-body {
-		--wb-pad: 24px;
-		padding: var(--wb-pad) var(--wb-pad) 28px;
-		font-size: clamp(9px, (100cqw - 2 * var(--wb-pad)) / 56.5, 12px);
-		line-height: 1.3;
-		height: 560px;
-		overflow-y: auto;
-		overflow-x: hidden;
-	}
-	.w-body :global(pre) {
-		overflow-x: auto;
-		/* AnaFetch sets a fixed rem line-height inline; keep the logo's proportions as the font scales */
-		line-height: 1.35em !important;
-	}
-	.term-host {
-		--term-fs: 1em;
-		margin-top: 24px;
-	}
-	.term-host :global(#term-scroll) {
-		opacity: 1 !important;
-	}
-	.term-host :global(.term-typed) {
-		white-space: pre-wrap;
-		word-break: break-all;
-	}
-
 	@media (prefers-reduced-motion: reduce) {
 		.tl-track {
 			scroll-behavior: auto;
 		}
-		.tile,
-		.cmd-ret {
+		.tile {
 			transition: none;
 		}
 	}
@@ -717,8 +551,7 @@
 			padding: 0 24px;
 			--card-w: calc((100cqw - 48px) / 2.4);
 		}
-		.stack,
-		.shell {
+		.stack {
 			grid-template-columns: 1fr;
 		}
 		.stack-copy {
@@ -730,45 +563,6 @@
 		}
 		.stack-row {
 			padding: 18px 24px;
-		}
-		.shell-copy {
-			order: -1;
-			padding: 64px 24px 32px;
-		}
-		.shell-win {
-			padding: 0 24px 48px;
-			border-right: 0;
-		}
-		.cmds {
-			display: flex;
-			flex-wrap: wrap;
-			gap: 8px;
-			margin-top: 8px;
-			border-top: 0;
-		}
-		.cmds li {
-			border-bottom: 0;
-		}
-		.cmd {
-			width: auto;
-			min-height: 38px;
-			padding: 9px 14px;
-			border: 1px solid var(--pill-border);
-			border-radius: 999px;
-			background: var(--surface);
-			font-size: 13px;
-			transition:
-				color 0.2s ease,
-				border-color 0.2s ease;
-		}
-		.cmd:hover {
-			border-color: var(--line-2);
-		}
-		.cmd:focus-visible {
-			border-radius: 999px;
-		}
-		.cmd-ret {
-			display: none;
 		}
 	}
 	@media (max-width: 640px) {
@@ -808,20 +602,6 @@
 			align-items: flex-start;
 			gap: 10px;
 			padding: 18px 20px;
-		}
-		.shell-copy {
-			padding: 56px 20px 28px;
-		}
-		.shell-win {
-			padding: 0 20px 40px;
-		}
-		.w-body {
-			--wb-pad: 16px;
-			height: auto;
-			max-height: 560px;
-			padding: var(--wb-pad);
-			/* too narrow to fit anafetch at a readable size: keep 11px and let the pre scroll */
-			font-size: 11px;
 		}
 		.cta-row {
 			padding: 8px;
