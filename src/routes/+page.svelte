@@ -5,6 +5,10 @@
 
 <svelte:head>
 	<title>AnA</title>
+	<meta
+		name="description"
+		content="새로운 도약과 함께 성장하는 Application & Architecture, 선린인터넷고등학교 소프트웨어과 AnA"
+	/>
 </svelte:head>
 
 <Nav />
