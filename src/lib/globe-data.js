@@ -73,7 +73,7 @@ export const pois = [
 		lon: -7.1278,
 		iconType: 'spark',
 		value: 'history',
-		caption: 'Android & App → Application & Architecture',
+		caption: 'Android & Application -> Application & Architecture',
 		captionSide: 'left'
 	}
 ];

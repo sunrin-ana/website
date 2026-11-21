@@ -14,6 +14,6 @@ export const history = [
 	{ year: '2016', title: 'Android & Application', body: 'App, IoT 개발' },
 	{ year: '2017', title: 'Android & Application', body: 'App, Web 개발, Algorithm 연구' },
 	{ year: '2019', title: 'Application & Architecture', body: '백엔드 개발 동아리로의 전환' },
-	{ year: '2024', title: 'Application & Architecture', body: '자체 서버 보유' },
-	{ year: '2026', title: 'Application & Architecture', body: '혁명적부원들!' },
+	{ year: '2024', title: 'Server', body: '자체 서버 보유' },
+	{ year: '2026', title: '현재', body: '서버/백엔드 전공동아리로서 활동 중' },
 ];

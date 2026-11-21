@@ -50,7 +50,7 @@ export const tracks = [
 		summary: 'AnA 내부서비스 개발을 위한 심화 개념',
 		modules: [
 			{ id: '01', name: 'Language & Framework', tech: ['go'] },
-			{ id: '02', name: 'Data Structures & Algorithms', tech: [] }
+			{ id: '02', name: 'Server Management', tech: [] }
 		]
 	}
 ];

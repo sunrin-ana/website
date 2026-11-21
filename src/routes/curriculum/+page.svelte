@@ -9,7 +9,7 @@
 
 <svelte:head>
 	<title>Curriculum — AnA</title>
-	<meta name="description" content="AnA 부원들이 함께 공부하는 커리큘럼 트랙과 모듈을 소개합니다." />
+	<meta name="description" content="AnA 부원들이 함께 공부하는 커리큘럼 소개" />
 </svelte:head>
 
 <Nav />
@@ -20,9 +20,9 @@
 		<section class="row bare hero">
 			<div class="hero-text">
 				<h1>Curriculum</h1>
-				<p>AnA 부원들이 함께 공부하는 과정입니다.</p>
+				<p>AnA 의 1년 커리큘럼입니다</p>
 			</div>
-			<nav class="jump" aria-label="트랙 바로가기">
+			<!-- <nav class="jump" aria-label="트랙 바로가기">
 				{#each tracks as t, i}
 					<a class="jump-pill" href="#{t.id}">
 						<span class="jump-n">Track {num(i)}</span>
@@ -30,7 +30,7 @@
 						<span class="jump-count">{t.modules.length}</span>
 					</a>
 				{/each}
-			</nav>
+			</nav> -->
 		</section>
 
 		<!-- ============ OVERVIEW ============ -->
@@ -38,7 +38,7 @@
 			{#each tracks as t, i}
 				<a class="ov" href="#{t.id}">
 					<span class="ov-head">
-						<span class="ov-n">Track {num(i)}</span>
+						<!-- <span class="ov-n">Track {num(i)}</span> -->
 						<span class="ov-title">{t.title}</span>
 					</span>
 					<ol class="ov-list">
@@ -55,10 +55,9 @@
 			<section class="row track" id={t.id} aria-labelledby="{t.id}-title">
 				<header class="track-head">
 					<div class="track-sticky reveal" use:reveal>
-						<span class="kicker">Track {num(i)}</span>
+						<!-- <span class="kicker">Track {num(i)}</span> -->
 						<h2 id="{t.id}-title">{t.title}</h2>
 						<p>{t.summary}</p>
-						<span class="track-count">모듈 {t.modules.length}개</span>
 					</div>
 				</header>
 				<ol class="road">
@@ -85,10 +84,10 @@
 		{/each}
 
 		<!-- ============ NOTE ============ -->
-		<section class="row note">
+		<!-- <section class="row note">
 			<p>커리큘럼은 기수마다 부원들과 함께 다듬어 갑니다.</p>
 			<a class="btn btn-line" href="/about">AnA 알아보기</a>
-		</section>
+		</section>-->
 	</div>
 </main>
 

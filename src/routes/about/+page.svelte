@@ -60,7 +60,7 @@
 	<div class="frame">
 		<!-- ============ HERO + GLOBE ============ -->
 		<section class="row bare hero">
-			<h1>We're connecting the world.</h1>
+			<h1>We're connecting the world</h1>
 			<p>선린인터넷고등학교 서버/백엔드 전공동아리 AnA</p>
 		</section>
 		<section class="row bare globe-row">

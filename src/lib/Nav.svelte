@@ -36,7 +36,6 @@
 		{ label: 'Archives', href: '/archives' },
 		{ label: 'Curriculum', href: '/curriculum' },
 		{ label: 'AnAlog', soon: true, external: true },
-		{ label: 'Solve', soon: true, external: true }
 	];
 
 	const isActive = (href?: string) => !!href && page.url.pathname.startsWith(href);

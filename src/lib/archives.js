@@ -45,13 +45,13 @@ export const archives = [
 	{
 		id: 'ana-st',
 		name: 'ana.st',
-		tagline: 'AnA 공식 웹사이트.',
-		summary: 'AnA 공식 웹사이트.',
+		tagline: 'AnA 공식 웹사이트',
+		summary: 'AnA 공식 웹사이트',
 		description: '동아리 소개, 아카이브, 지원 안내까지. SvelteKit과 Cloudflare 위에서 동작합니다.',
 		category: 'internal',
 		status: 'live',
 		year: 2026,
-		makers: ['AnA'],
+		makers: ['AnA ISDT'],
 		stack: ['SvelteKit', 'Three.js', 'Cloudflare'],
 		url: 'https://ana.st',
 		theme: ['#334882', '#1b2647'],
@@ -98,8 +98,8 @@ export const archives = [
 		category: 'internal',
 		status: 'live',
 		year: 2026,
-		makers: ['AnA'],
-		stack: ['Web'],
+		makers: ['AnA ISDT'],
+		stack: ['Web','Spring'],
 		url: 'https://apply.ana.st/',
 		theme: ['#ff7a3d', '#e2492a'],
 		featured: true
@@ -112,24 +112,24 @@ export const archives = [
 		category: 'internal',
 		status: 'soon',
 		year: 2026,
-		makers: ['AnA'],
+		makers: ['AnA ISDT'],
 		stack: [],
 		url: null,
 		theme: ['#1d1d1f', '#3a3a3f']
 	},
-	{
-		id: 'solve',
-		name: 'Solve',
-		tagline: '함께 풀고, 함께 성장하는 문제 풀이.',
-		description: '동아리 내부 문제 풀이 및 스터디 플랫폼입니다.',
-		category: 'internal',
-		status: 'soon',
-		year: 2026,
-		makers: ['AnA'],
-		stack: [],
-		url: null,
-		theme: ['#0f9d7a', '#0a6b54']
-	}
+	// {
+	// 	id: 'solve',
+	// 	name: 'Solve',
+	// 	tagline: '함께 풀고, 함께 성장하는 문제 풀이.',
+	// 	description: '동아리 내부 문제 풀이 및 스터디 플랫폼입니다.',
+	// 	category: 'internal',
+	// 	status: 'soon',
+	// 	year: 2026,
+	// 	makers: ['AnA'],
+	// 	stack: [],
+	// 	url: null,
+	// 	theme: ['#0f9d7a', '#0a6b54']
+	// }
 
 	// 부원 프로젝트 예시 — 주석을 풀고 내용을 채워주세요.
 	// {
