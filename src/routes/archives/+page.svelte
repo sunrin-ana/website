@@ -46,7 +46,7 @@
 		<!-- ============ INTRO ============ -->
 		<header class="row no-cross intro">
 			<h1>Archives</h1>
-			<p class="lede">AnA 부원들이 만든 서비스와 동아리에서 운영하는 서비스를 모았습니다.</p>
+			<p class="lede">AnA 부원들이 개발한 서비스와 동아리 내부 서비스를 소개합니다.</p>
 		</header>
 
 		<!-- ============ FEATURED (magazine: first = lead, rest = side) ============ -->

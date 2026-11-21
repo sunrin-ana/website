@@ -24,8 +24,38 @@
 		<meta name="twitter:image" content="https://ana.st/logo.svg">
 		
 		<meta name="color-scheme" content="light dark" />
-		<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
-		<meta name="theme-color" content="#121318" media="(prefers-color-scheme: dark)" />
+		<meta name="theme-color" content="#ffffff" />
+		<script>
+			// Apply the saved theme before first paint so there is no flash.
+			// Keep the storage key and event name in sync with src/lib/theme.js.
+			(() => {
+				const root = document.documentElement;
+				const read = () => {
+					try {
+						return localStorage.getItem('ana-theme');
+					} catch {
+						return null;
+					}
+				};
+				const paint = (theme) => {
+					root.dataset.theme = theme;
+					const meta = document.querySelector('meta[name="theme-color"]');
+					if (meta) meta.setAttribute('content', theme === 'dark' ? '#121318' : '#ffffff');
+				};
+				const media = matchMedia('(prefers-color-scheme: dark)');
+				const saved = read();
+
+				paint(saved === 'light' || saved === 'dark' ? saved : media.matches ? 'dark' : 'light');
+
+				// Until the visitor picks a theme, follow the OS.
+				media.addEventListener('change', (event) => {
+					const choice = read();
+					if (choice === 'light' || choice === 'dark') return;
+					paint(event.matches ? 'dark' : 'light');
+					window.dispatchEvent(new CustomEvent('ana:themechange'));
+				});
+			})();
+		</script>
 		%sveltekit.head%
 		<style>
 			@font-face {

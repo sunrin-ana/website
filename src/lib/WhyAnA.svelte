@@ -440,10 +440,8 @@
 		overflow: hidden;
 		mix-blend-mode: multiply;
 	}
-	@media (prefers-color-scheme: dark) {
-		.pill {
-			mix-blend-mode: screen;
-		}
+	:global(html[data-theme='dark']) .pill {
+		mix-blend-mode: screen;
 	}
 	.pill-noise span {
 		position: absolute;

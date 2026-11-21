@@ -46,7 +46,7 @@ export const archives = [
 		id: 'ana-st',
 		name: 'ana.st',
 		tagline: 'AnA 공식 웹사이트.',
-		summary: '동아리 공식 홈페이지.',
+		summary: 'AnA 공식 웹사이트.',
 		description: '동아리 소개, 아카이브, 지원 안내까지. SvelteKit과 Cloudflare 위에서 동작합니다.',
 		category: 'internal',
 		status: 'live',
@@ -91,8 +91,8 @@ export const archives = [
 		]
 	},
 	{
-		id: 'apply',
-		name: 'AnA Apply',
+		id: 'anapply',
+		name: 'AnApply',
 		tagline: '지원부터 결과까지, 한 곳에서.',
 		description: '신입 부원 모집 기간에 운영되는 지원서 접수 시스템입니다.',
 		category: 'internal',

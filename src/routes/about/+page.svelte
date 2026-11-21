@@ -61,7 +61,7 @@
 		<!-- ============ HERO + GLOBE ============ -->
 		<section class="row bare hero">
 			<h1>We're connecting the world.</h1>
-			<p>어두운 곳에서 세상을 밝게 만드는 동아리</p>
+			<p>선린인터넷고등학교 서버/백엔드 전공동아리 AnA</p>
 		</section>
 		<section class="row bare globe-row">
 			<div class="globe-bleed">
@@ -88,7 +88,6 @@
 			<header class="tl-head reveal" use:reveal>
 				<div class="tl-copy">
 					<h2 class="title">연혁</h2>
-					<p class="subtitle">2011년부터 지금까지, AnA가 걸어온 길.</p>
 				</div>
 				<div class="tl-nav">
 					<button type="button" class="tl-btn" aria-label="이전" disabled={atStart} onclick={() => step(-1)}>
@@ -128,7 +127,7 @@
 		<section class="row stack">
 			<header class="stack-copy reveal" use:reveal>
 				<h2 class="title">기술 스택</h2>
-				<p class="subtitle">커리큘럼에서 다루는 기술들입니다.</p>
+				<p class="subtitle">커리큘럼에서 다루는 기술들</p>
 			</header>
 			<ul class="stack-list">
 				{#each stack as g}

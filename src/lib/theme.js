@@ -1,7 +1,43 @@
 // Theme helpers for canvas/WebGL code, which can't read CSS custom properties directly.
 
+/** localStorage key + window event shared with the pre-paint script in app.html. */
+const THEME_KEY = 'ana-theme';
+export const THEME_EVENT = 'ana:themechange';
+
 /** @type {CanvasRenderingContext2D | null} */
 let ctx = null;
+
+/** @returns {'light' | 'dark'} */
+export function getTheme() {
+	if (typeof document === 'undefined') return 'light';
+	return document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
+}
+
+/** Keep the mobile browser chrome in step with the page. @param {'light' | 'dark'} theme */
+function syncThemeColor(theme) {
+	const meta = document.querySelector('meta[name="theme-color"]');
+	if (meta) meta.setAttribute('content', theme === 'dark' ? '#121318' : '#ffffff');
+}
+
+/**
+ * Apply a theme and remember the choice.
+ * @param {'light' | 'dark'} theme
+ */
+export function setTheme(theme) {
+	if (typeof document === 'undefined') return;
+	document.documentElement.dataset.theme = theme;
+	try {
+		localStorage.setItem(THEME_KEY, theme);
+	} catch {
+		// storage disabled — the theme still applies for this page
+	}
+	syncThemeColor(theme);
+	window.dispatchEvent(new CustomEvent(THEME_EVENT, { detail: { theme } }));
+}
+
+export function toggleTheme() {
+	setTheme(getTheme() === 'dark' ? 'light' : 'dark');
+}
 
 /**
  * Resolve a CSS colour expression (e.g. 'var(--brand)') to '#rrggbb' in the current theme.
@@ -30,20 +66,20 @@ export function cssColor(expr, el = document.documentElement) {
 }
 
 /**
- * Call `fn` now and whenever the browser switches between light and dark. Returns a cleanup.
+ * Call `fn` now and whenever the theme is toggled (or the OS theme changes while
+ * no explicit choice is stored). Returns a cleanup.
  * @param {() => void} fn
  */
 export function onThemeChange(fn) {
-	const mq = matchMedia('(prefers-color-scheme: dark)');
 	let raf = 0;
 	const run = () => {
 		cancelAnimationFrame(raf);
 		raf = requestAnimationFrame(() => fn());
 	};
-	mq.addEventListener('change', run);
+	window.addEventListener(THEME_EVENT, run);
 	fn();
 	return () => {
 		cancelAnimationFrame(raf);
-		mq.removeEventListener('change', run);
+		window.removeEventListener(THEME_EVENT, run);
 	};
 }

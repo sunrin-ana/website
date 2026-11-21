@@ -6,9 +6,11 @@
 	import { faInstagram, faGithub, faFacebook } from '@fortawesome/free-brands-svg-icons';
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
+	import { getTheme, onThemeChange, toggleTheme } from '$lib/theme.js';
 
 	let isOpen = $state(false);
 	let scrolled = $state(false);
+	let theme = $state<'light' | 'dark'>('light');
 	let burger: HTMLButtonElement;
 	let sheet: HTMLDivElement;
 	let brandEl: HTMLAnchorElement;
@@ -18,6 +20,9 @@
 	onMount(() => {
 		scrolled = window.scrollY > 64;
 	});
+
+	// the toggle icon follows the theme that app.html resolved before paint
+	onMount(() => onThemeChange(() => (theme = getTheme())));
 
 	// never hide the CTA while it holds keyboard focus
 	$effect(() => {
@@ -124,6 +129,25 @@
 				<a class="pill round" style="--k:2" href="https://www.facebook.com/sunrinana/" target="_blank" rel="noopener" aria-label="Facebook">
 					<Fa icon={faFacebook} />
 				</a>
+				<button
+					class="pill round"
+					style="--k:3"
+					type="button"
+					onclick={toggleTheme}
+					aria-label={theme === 'dark' ? '라이트 모드로 전환' : '다크 모드로 전환'}
+					title={theme === 'dark' ? '라이트 모드로 전환' : '다크 모드로 전환'}
+				>
+					{#if theme === 'dark'}
+						<svg class="theme-icon" viewBox="0 0 24 24" aria-hidden="true">
+							<circle cx="12" cy="12" r="4" />
+							<path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+						</svg>
+					{:else}
+						<svg class="theme-icon" viewBox="0 0 24 24" aria-hidden="true">
+							<path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z" />
+						</svg>
+					{/if}
+				</button>
 			</div>
 			<button class="cta" bind:this={ctaEl} type="button" onclick={join}>지원하기</button>
 			<button
@@ -164,6 +188,20 @@
 					<a class="pill round" href="https://github.com/sunrin-ana" target="_blank" rel="noopener" aria-label="GitHub"><Fa icon={faGithub} /></a>
 					<a class="pill round" href="https://instagram.com/sunrin_ana" target="_blank" rel="noopener" aria-label="Instagram"><Fa icon={faInstagram} /></a>
 					<a class="pill round" href="https://www.facebook.com/sunrinana/" target="_blank" rel="noopener" aria-label="Facebook"><Fa icon={faFacebook} /></a>
+					<button class="pill" type="button" onclick={toggleTheme}>
+						{#if theme === 'dark'}
+							<svg class="theme-icon" viewBox="0 0 24 24" aria-hidden="true">
+								<circle cx="12" cy="12" r="4" />
+								<path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+							</svg>
+							라이트 모드
+						{:else}
+							<svg class="theme-icon" viewBox="0 0 24 24" aria-hidden="true">
+								<path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z" />
+							</svg>
+							다크 모드
+						{/if}
+					</button>
 				</div>
 			</div>
 		</div>
@@ -310,6 +348,15 @@
 	}
 	.pill :global(svg) {
 		font-size: 1.05rem;
+	}
+	.pill .theme-icon {
+		width: 18px;
+		height: 18px;
+		fill: none;
+		stroke: currentColor;
+		stroke-width: 1.6;
+		stroke-linecap: round;
+		stroke-linejoin: round;
 	}
 	.pill.round {
 		width: 38px;

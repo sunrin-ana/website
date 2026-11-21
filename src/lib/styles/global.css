@@ -3,8 +3,9 @@
    ========================================================= */
 
 /* =========================================================
-   Theme — light by default; dark follows prefers-color-scheme
-   (the browser / OS setting). AnA blue (#334882) stays the exact hex in light.
+   Theme — light by default, dark when <html data-theme="dark">.
+   The attribute is set before first paint (see app.html) and flipped by the
+   header toggle (see theme.js). AnA blue (#334882) stays the exact hex in light.
    ========================================================= */
 :root {
 	color-scheme: light;
@@ -62,48 +63,47 @@
 	--nav-h: 72px;
 
 	/* type */
-	--font-sans: 'Hanken Grotesk', 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui,
-		'Apple SD Gothic Neo', 'Noto Sans KR', 'Helvetica Neue', sans-serif;
+	--font-sans:
+		'Hanken Grotesk', 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont,
+		system-ui, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Helvetica Neue', sans-serif;
 	--font-mono: 'SFMono-Terminal', ui-monospace, 'SFMono-Regular', Menlo, monospace;
 
 	--ease: cubic-bezier(0.22, 0.61, 0.36, 1);
 	--ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* ---------- Dark (follows the browser / OS light-dark setting) ---------- */
-@media (prefers-color-scheme: dark) {
-	:root {
-		color-scheme: dark;
-		--brand: oklch(0.72 0.15 266);
-		--brand-2: oklch(0.77 0.15 266);
-		--brand-ink: oklch(0.85 0.09 266);
-		--brand-deep: oklch(0.62 0.165 266);
-		--brand-soft: oklch(0.27 0.0525 266);
-		--brand-line: oklch(0.4 0.075 266);
-		--brand-fill: oklch(0.47 0.17 266);
-		--brand-fill-2: oklch(0.36 0.15 266);
-		--accent-2: oklch(0.68 0.15 280);
-		--on-brand: #0e0f13;
-		--on-fill: #ffffff;
-		--logo-ink: var(--brand);
-		--ink: oklch(0.95 0.004 266);
-		--ink-2: oklch(0.83 0.008 266);
-		--ink-3: oklch(0.7 0.01 266);
-		--ink-4: oklch(0.55 0.012 266);
-		--line: oklch(0.27 0.012 266);
-		--line-2: oklch(0.33 0.014 266);
-		--pill-border: oklch(0.3 0.012 266);
-		--gutter-dot: oklch(0.3 0.012 266);
-		--surface: oklch(0.165 0.008 266);
-		--surface-2: oklch(0.21 0.012 266);
-		--surface-3: oklch(0.19 0.01 266);
-		--card: oklch(0.2 0.01 266);
-		--ok: #3ccf82;
-		--ok-soft: #12321f;
-		--ok-ink: #6ee7a0;
-		--warn-soft: #3a2610;
-		--warn-ink: #fbbf6a;
-	}
+/* ---------- Dark (applied by the theme toggle) ---------- */
+:root[data-theme='dark'] {
+	color-scheme: dark;
+	--brand: oklch(0.72 0.15 266);
+	--brand-2: oklch(0.77 0.15 266);
+	--brand-ink: oklch(0.85 0.09 266);
+	--brand-deep: oklch(0.62 0.165 266);
+	--brand-soft: oklch(0.27 0.0525 266);
+	--brand-line: oklch(0.4 0.075 266);
+	--brand-fill: oklch(0.47 0.17 266);
+	--brand-fill-2: oklch(0.36 0.15 266);
+	--accent-2: oklch(0.68 0.15 280);
+	--on-brand: #0e0f13;
+	--on-fill: #ffffff;
+	--logo-ink: var(--brand);
+	--ink: oklch(0.95 0.004 266);
+	--ink-2: oklch(0.83 0.008 266);
+	--ink-3: oklch(0.7 0.01 266);
+	--ink-4: oklch(0.55 0.012 266);
+	--line: oklch(0.27 0.012 266);
+	--line-2: oklch(0.33 0.014 266);
+	--pill-border: oklch(0.3 0.012 266);
+	--gutter-dot: oklch(0.3 0.012 266);
+	--surface: oklch(0.165 0.008 266);
+	--surface-2: oklch(0.21 0.012 266);
+	--surface-3: oklch(0.19 0.01 266);
+	--card: oklch(0.2 0.01 266);
+	--ok: #3ccf82;
+	--ok-soft: #12321f;
+	--ok-ink: #6ee7a0;
+	--warn-soft: #3a2610;
+	--warn-ink: #fbbf6a;
 }
 
 *,
@@ -192,7 +192,13 @@ canvas {
 	pointer-events: none;
 	z-index: 2;
 	background:
-		radial-gradient(circle at 4.5px 4.5px, var(--surface) 2.6px, var(--line-2) 3px, var(--line-2) 3.9px, transparent 4.3px),
+		radial-gradient(
+			circle at 4.5px 4.5px,
+			var(--surface) 2.6px,
+			var(--line-2) 3px,
+			var(--line-2) 3.9px,
+			transparent 4.3px
+		),
 		radial-gradient(
 			circle at calc(100% - 4.5px) 4.5px,
 			var(--surface) 2.6px,
@@ -437,11 +443,23 @@ canvas {
 		linear-gradient(var(--b), var(--b)), linear-gradient(var(--b), var(--b));
 	background-repeat: no-repeat;
 	background-size:
-		10px 1px, 1px 10px, 10px 1px, 1px 10px,
-		10px 1px, 1px 10px, 10px 1px, 1px 10px;
+		10px 1px,
+		1px 10px,
+		10px 1px,
+		1px 10px,
+		10px 1px,
+		1px 10px,
+		10px 1px,
+		1px 10px;
 	background-position:
-		0 0, 0 0, 100% 0, 100% 0,
-		0 100%, 0 100%, 100% 100%, 100% 100%;
+		0 0,
+		0 0,
+		100% 0,
+		100% 0,
+		0 100%,
+		0 100%,
+		100% 100%,
+		100% 100%;
 	box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--b) 22%, transparent);
 }
 .callout b {
