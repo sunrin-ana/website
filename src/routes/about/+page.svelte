@@ -12,18 +12,13 @@
 		{
 			icon: 'app' as const,
 			title: 'Application',
-			body: '웹과 앱을 기획부터 출시까지. 실제 사용자가 쓰는 프로덕트를 직접 만들고 배포합니다.'
+			body: '사용자를 위한 서비스를 만들고'
 		},
 		{
 			icon: 'arch' as const,
 			title: 'Architecture',
-			body: '서버, 데이터베이스, API. 서비스가 버티는 구조를 고민하고 설계합니다.'
+			body: '그 서비스의 구조를 설계합니다'
 		},
-		{
-			icon: 'infra' as const,
-			title: 'Infrastructure',
-			body: '컨테이너와 클라우드 위에서 서비스를 운영하며 실제 환경의 문제를 해결합니다.'
-		}
 	];
 
 	/* ---------- history: side-scroll ---------- */
@@ -56,7 +51,7 @@
 
 <svelte:head>
 	<title>About — AnA</title>
-	<meta name="description" content="2011년부터 활동해 온 선린인터넷고등학교 소프트웨어과 전공동아리 AnA를 소개합니다." />
+	<meta name="description" content="선린인터넷고등학교 소프트웨어과 전공동아리 AnA" />
 </svelte:head>
 
 <Nav />
@@ -66,7 +61,7 @@
 		<!-- ============ HERO + GLOBE ============ -->
 		<section class="row bare hero">
 			<h1>We're connecting the world.</h1>
-			<p>화면을 그리는 일부터 서버를 설계하고 운영하는 일까지, 모두 직접 해봅니다.</p>
+			<p>어두운 곳에서 세상을 밝게 만드는 동아리</p>
 		</section>
 		<section class="row bare globe-row">
 			<div class="globe-bleed">
@@ -84,9 +79,9 @@
 		</section>
 
 		<!-- ============ WHY ANA ============ -->
-		<section class="row bare why-row">
+		<!-- <section class="row bare why-row">
 			<WhyAnA />
-		</section>
+		</section> -->
 
 		<!-- ============ HISTORY (side-scroll timeline) ============ -->
 		<section class="row timeline">
@@ -215,7 +210,7 @@
 	/* ---------- Cells ---------- */
 	.cells {
 		display: grid;
-		grid-template-columns: repeat(3, 1fr);
+		grid-template-columns: repeat(2, 1fr);
 	}
 	.cell {
 		padding: 28px 28px 36px;

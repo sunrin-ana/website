@@ -26,7 +26,7 @@ export const pois = [
 		iconType: 'hub',
 		group: 'kr-infra',
 		value: 'Since 2011',
-		caption: '선린인터넷고등학교 341호에서 시작한 소프트웨어과 전공동아리.',
+		caption: '2011년부터 시작된 소프트웨어과 전공동아리',
 		captionSide: 'right'
 	},
 	{ lat: 33.4996, lon: 126.5312, iconType: 'db', group: 'kr-infra' },
@@ -42,7 +42,7 @@ export const pois = [
 		iconType: 'user',
 		group: 'g-americas',
 		value: 'Application',
-		caption: '웹과 앱을 기획부터 출시까지 직접 만듭니다.',
+		caption: '사용자를 위한 서비스를 만듭니다',
 		captionSide: 'left'
 	},
 	{
@@ -51,7 +51,7 @@ export const pois = [
 		iconType: 'user',
 		group: 'g-americas',
 		value: 'Architecture',
-		caption: '애플리케이션을 뒷받침하는 서버와 데이터베이스, API를 설계합니다.',
+		caption: '서비스의 구조를 설계합니다',
 		captionSide: 'right'
 	},
 
@@ -63,15 +63,6 @@ export const pois = [
 
 	// South / West Asia
 	{ lat: 30.076, lon: 69.8777, iconType: 'server', group: 'in-infra' },
-	{
-		lat: 22.2048,
-		lon: 57.2708,
-		iconType: 'server',
-		group: 'in-infra',
-		value: 'Infrastructure',
-		caption: '만든 서비스를 직접 배포하고 운영합니다.',
-		captionSide: 'left'
-	},
 	{ lat: 12.9716, lon: 77.5946, iconType: 'db', group: 'in-infra' },
 	{ lat: 28.076, lon: 72.8777, iconType: 'user', group: 'g-india' },
 	{ lat: 25.2048, lon: 55.2708, iconType: 'user', group: 'g-india' },
@@ -81,8 +72,8 @@ export const pois = [
 		lat: 37.5074,
 		lon: -7.1278,
 		iconType: 'spark',
-		value: '3 names',
-		caption: 'Algorithm & Application → Android & App → Application & Architecture',
+		value: 'history',
+		caption: 'Android & App → Application & Architecture',
 		captionSide: 'left'
 	}
 ];

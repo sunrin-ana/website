@@ -10,10 +10,10 @@
  * @type {{ year: string, title: string, body?: string }[]}
  */
 export const history = [
-	{ year: '', title: '', body: '' },
-	{ year: '', title: '', body: '' },
-	{ year: '', title: '', body: '' },
-	{ year: '', title: '', body: '' },
-	{ year: '', title: '', body: '' },
-	{ year: '', title: '', body: '' }
+	{ year: '2011', title: '동아리 설립', body: ' ' },
+	{ year: '2016', title: 'Android & Application', body: 'App, IoT 개발' },
+	{ year: '2017', title: 'Android & Application', body: 'App, Web 개발, Algorithm 연구' },
+	{ year: '2019', title: 'Application & Architecture', body: '백엔드 개발 동아리로의 전환' },
+	{ year: '2024', title: 'Application & Architecture', body: '자체 서버 보유' },
+	{ year: '2026', title: 'Application & Architecture', body: '혁명적부원들!' },
 ];
