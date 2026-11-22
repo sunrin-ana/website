@@ -57,8 +57,8 @@ export const archives = [
 		theme: ['#334882', '#1b2647'],
 		featured: true,
 		overview: [
-			'ana.st는 AnA를 처음 만나는 곳입니다. 동아리 소개와 커리큘럼, 부원들이 만든 서비스, 지원 안내를 한 사이트에 모았습니다.',
-			'SvelteKit으로 만들고 Cloudflare에 배포합니다. About 페이지의 지구본은 Three.js로 직접 그렸고, 화면은 브라우저의 라이트·다크 설정을 그대로 따라갑니다.'
+			'AnA의 공식 웹사이트입니다. ',
+			'동아리에 관한 소개와 동아리 부원들의 프로젝트들을 모아놨습니다.'
 		],
 		screens: {
 			desktop: '/archives/ana-st/desktop.webp',
@@ -67,27 +67,28 @@ export const archives = [
 			mobileDark: '/archives/ana-st/mobile-dark.webp'
 		},
 		highlights: [
-			{
-				title: '직접 그린 지구본',
-				body: 'Three.js로 대륙을 점으로 찍어 만든 지구본입니다. 드래그해서 돌려볼 수 있고, 지점 사이를 잇는 선이 자라났다 사라집니다.',
-				device: 'desktop',
-				image: '/archives/ana-st/globe.webp',
-				imageDark: '/archives/ana-st/globe-dark.webp'
-			},
+			// 인데이거굳이있어야하나?없어도될거같은데.
+			// {
+			// 	title: '세상을 연결하는 동아리',
+			// 	body: 'Three.js를 사용하여 지구본을 만들어 세상을 연결해보았습니다',
+			// 	device: 'desktop',
+			// 	image: '/archives/ana-st/globe.webp',
+			// 	imageDark: '/archives/ana-st/globe-dark.webp'
+			// },
 			{
 				title: '부원들이 만든 서비스',
-				body: 'Archives에서 동아리 내부 서비스와 부원 프로젝트를 한눈에 볼 수 있습니다. 항목은 archives.js 한 파일로 관리합니다.',
+				body: 'Archives에서 동아리 내부 서비스와 부원 프로젝트를 한눈에 볼 수 있습니다.',
 				device: 'desktop',
 				image: '/archives/ana-st/archives.webp',
 				imageDark: '/archives/ana-st/archives-dark.webp'
-			},
-			{
-				title: '어느 화면에서나',
-				body: '휴대폰에서도 같은 구성을 그대로 볼 수 있도록 모든 페이지를 한 열 레이아웃으로 다시 배치합니다.',
-				device: 'mobile',
-				image: '/archives/ana-st/mobile-about.webp',
-				imageDark: '/archives/ana-st/mobile-about-dark.webp'
 			}
+			// {
+			// 	title: '어느 화면에서나',
+			// 	body: '휴대폰에서도 같은 구성을 그대로 볼 수 있도록 모든 페이지를 한 열 레이아웃으로 다시 배치합니다.',
+			// 	device: 'mobile',
+			// 	image: '/archives/ana-st/mobile-about.webp',
+			// 	imageDark: '/archives/ana-st/mobile-about-dark.webp'
+			// }
 		]
 	},
 	{

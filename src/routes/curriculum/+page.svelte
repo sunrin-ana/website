@@ -55,7 +55,6 @@
 			<section class="row track" id={t.id} aria-labelledby="{t.id}-title">
 				<header class="track-head">
 					<div class="track-sticky reveal" use:reveal>
-						<!-- <span class="kicker">Track {num(i)}</span> -->
 						<h2 id="{t.id}-title">{t.title}</h2>
 						<p>{t.summary}</p>
 					</div>
@@ -63,8 +62,8 @@
 				<ol class="road">
 					{#each t.modules as m, k}
 						<li class="step reveal" use:reveal style="--d:{k * 0.07}s">
-							<span class="node" aria-hidden="true">{m.id}</span>
 							<div class="step-body">
+								<span class="node" aria-hidden="true">{m.id}</span>
 								<h3>{m.name}</h3>
 								{#if m.tech.length}
 									<ul class="stack" aria-label="다루는 기술">
@@ -123,45 +122,6 @@
 		font-size: clamp(1rem, 1.35vw, 1.2rem);
 		color: color-mix(in srgb, var(--ink) 70%, transparent);
 	}
-	.jump {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 8px;
-	}
-	.jump-pill {
-		display: inline-flex;
-		align-items: center;
-		gap: 10px;
-		height: 40px;
-		padding: 0 8px 0 16px;
-		border: 1px solid var(--pill-border);
-		border-radius: 999px;
-		font-size: 0.95rem;
-		font-weight: 500;
-		color: var(--ink);
-		text-decoration: none;
-		transition: border-color 0.2s ease;
-	}
-	.jump-pill:hover {
-		border-color: var(--line-2);
-	}
-	.jump-pill:focus-visible {
-		border-radius: 999px;
-	}
-	.jump-n {
-		color: var(--brand);
-	}
-	.jump-count {
-		display: inline-grid;
-		place-items: center;
-		min-width: 24px;
-		height: 24px;
-		padding: 0 6px;
-		border-radius: 999px;
-		background: var(--surface-2);
-		font-size: 0.8rem;
-		color: var(--ink-2);
-	}
 
 	/* ---------- Overview (split) ---------- */
 	.overview {
@@ -186,13 +146,7 @@
 		border-radius: 0;
 		outline-offset: -2px;
 	}
-	.ov-n,
-	.kicker {
-		font-size: 0.9rem;
-		font-weight: 500;
-		color: var(--brand);
-	}
-	/* compact index: kicker + title on one line, the module list is the content */
+	/* compact index: number + title on one line, the module list is the content */
 	.ov-head {
 		display: flex;
 		flex-wrap: wrap;
@@ -236,9 +190,6 @@
 		position: sticky;
 		top: calc(var(--nav-h) + 32px);
 	}
-	.kicker {
-		display: block;
-	}
 	.track-head h2 {
 		margin: 14px 0 0;
 		font-size: clamp(1.5rem, 2.3vw, 2rem);
@@ -251,68 +202,36 @@
 		line-height: 1.6;
 		color: color-mix(in srgb, var(--ink) 70%, transparent);
 	}
-	.track-count {
-		display: block;
-		margin-top: 24px;
-		font-size: 0.9rem;
-		color: var(--ink-3);
-	}
 
 	/* roadmap */
 	.road {
-		--node: 34px;
 		list-style: none;
 		margin: 0;
 		padding: 64px 40px 64px 48px;
 	}
 	.step {
-		position: relative;
-		display: grid;
-		grid-template-columns: var(--node) 1fr;
-		column-gap: 24px;
 		padding-bottom: 44px;
 	}
 	.step:last-child {
 		padding-bottom: 0;
 	}
-	/* connector line: from this node's centre to the next node */
-	.step:not(:last-child)::before {
-		content: '';
-		position: absolute;
-		left: calc(var(--node) / 2 - 0.5px);
-		top: calc(var(--node) / 2);
-		bottom: calc(var(--node) / -2);
-		width: 1px;
-		background: var(--line-2);
-	}
 	.node {
-		position: relative;
-		z-index: 1;
-		display: grid;
-		place-items: center;
-		width: var(--node);
-		height: var(--node);
-		border: 1px solid var(--line-2);
-		border-radius: 50%;
-		background: var(--surface);
-		font-size: 0.85rem;
+		font-size: 1.2rem;
 		font-weight: 500;
 		color: var(--ink-3);
 		font-variant-numeric: tabular-nums;
-		transition:
-			border-color 0.2s ease,
-			color 0.2s ease,
-			background-color 0.2s ease;
+		transition: color 0.2s ease;
 	}
 	.step:first-child .node,
 	.step:hover .node {
-		border-color: var(--brand-line);
-		background: var(--brand-soft);
 		color: var(--brand);
 	}
 	.step-body {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 10px 16px;
 		min-width: 0;
-		padding-top: calc((var(--node) - 1.2rem * 1.35) / 2);
 	}
 	.step h3 {
 		margin: 0;
@@ -326,7 +245,7 @@
 		display: flex;
 		flex-wrap: wrap;
 		gap: 6px;
-		margin: 14px 0 0;
+		margin: 0;
 		padding: 0;
 	}
 	.stack li {
@@ -346,18 +265,6 @@
 	}
 
 	/* ---------- Note ---------- */
-	.note {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: 16px;
-		flex-wrap: wrap;
-		padding: 40px;
-	}
-	.note p {
-		margin: 0;
-		color: var(--ink-2);
-	}
 
 	@media (prefers-reduced-motion: reduce) {
 		.node {
@@ -400,18 +307,13 @@
 			font-size: 1.6rem;
 		}
 		.road {
-			--node: 30px;
 			padding: 32px 20px 48px;
 		}
 		.step {
-			column-gap: 16px;
 			padding-bottom: 36px;
 		}
 		.step h3 {
 			font-size: 1.1rem;
-		}
-		.note {
-			padding: 32px 20px;
 		}
 	}
 </style>

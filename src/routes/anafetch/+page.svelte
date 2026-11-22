@@ -39,7 +39,7 @@
 		border-radius: 14px;
 		background: var(--surface);
 		overflow: hidden;
-		box-shadow: 0 40px 80px -48px color-mix(in srgb, var(--brand-deep) 35%, transparent);
+		box-shadow: 0 16px 32px -20px color-mix(in srgb, var(--brand-deep) 35%, transparent);
 	}
 	.w-bar {
 		display: grid;

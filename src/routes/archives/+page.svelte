@@ -4,7 +4,7 @@
 	import { reveal } from '$lib/reveal.js';
 	import Phone from '$lib/devices/Phone.svelte';
 	import Screen from '$lib/devices/Screen.svelte';
-	import { archives, categoryLabels, statusLabels } from '$lib/archives.js';
+	import { archives, categoryLabels } from '$lib/archives.js';
 
 	type Filter = 'all' | 'member' | 'internal';
 	const filters: Filter[] = ['all', 'member', 'internal'];
@@ -34,9 +34,25 @@
 	);
 </script>
 
+{#snippet phone(item: (typeof archives)[number], eager = false)}
+	<Phone>
+		<Screen
+			src={item.screens?.mobile}
+			srcDark={item.screens?.mobileDark}
+			name={item.name}
+			theme={item.theme}
+			mark={item.category === 'internal'}
+			{eager}
+		/>
+	</Phone>
+{/snippet}
+
 <svelte:head>
 	<title>Archives — AnA</title>
-	<meta name="description" content="AnA 부원들이 개발한 서비스와 동아리 내부 서비스를 소개합니다." />
+	<meta
+		name="description"
+		content="AnA 부원들이 개발한 서비스와 동아리 내부 서비스를 소개합니다."
+	/>
 </svelte:head>
 
 <Nav />
@@ -51,7 +67,11 @@
 
 		<!-- ============ FEATURED (magazine: first = lead, rest = side) ============ -->
 		{#if featured.length}
-			<section class="row featured" class:solo={featured.length === 1} style="--side-rows:{Math.max(featured.length - 1, 1)}">
+			<section
+				class="row featured"
+				class:solo={featured.length === 1}
+				style="--side-rows:{Math.max(featured.length - 1, 1)}"
+			>
 				{#each featured as item, i}
 					<article
 						class="tile reveal"
@@ -61,28 +81,22 @@
 						style="--from:{item.theme[0]}; --to:{item.theme[1]}; --d:{i * 0.06}s"
 					>
 						<div class="tile-copy">
-							<span class="tile-status"><i></i>{statusLabels[item.status]}</span>
 							<h2>{item.name}</h2>
 							<p>{item.tagline}</p>
 							{#if i === 0}<p class="tile-desc">{item.description}</p>{/if}
 							<div class="tile-links">
 								{#if item.url}
-									<a class="btn btn-brand btn-sm" href={item.url} target="_blank" rel="noopener">방문하기</a>
+									<a class="btn btn-brand btn-sm" href={item.url} target="_blank" rel="noopener"
+										>방문하기</a
+									>
 								{/if}
-								<a class="text-link" href="/archives/{item.id}" aria-label="{item.name} 자세히 보기">자세히 보기 →</a>
+								<a class="text-link" href="/archives/{item.id}" aria-label="{item.name} 자세히 보기"
+									>자세히 보기 →</a
+								>
 							</div>
 						</div>
 						<div class="tile-device" aria-hidden="true">
-							<Phone>
-								<Screen
-									src={item.screens?.mobile}
-									srcDark={item.screens?.mobileDark}
-									name={item.name}
-									theme={item.theme}
-									mark={item.category === 'internal'}
-									eager
-								/>
-							</Phone>
+							{@render phone(item, true)}
 						</div>
 					</article>
 				{/each}
@@ -106,16 +120,18 @@
 					{/each}
 				</div>
 				<label class="search">
-					<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="9" cy="9" r="6" /><path d="M14 14l4 4" /></svg>
-					<input type="search" placeholder="서비스, 기술, 만든 사람 검색" bind:value={query} />
+					<svg viewBox="0 0 20 20" aria-hidden="true"
+						><circle cx="9" cy="9" r="6" /><path d="M14 14l4 4" /></svg
+					>
+					<input type="search" placeholder="검색하기" bind:value={query} />
 				</label>
 			</div>
 
 			<div class="thead" aria-hidden="true">
-				<span>Service</span>
-				<span>Category</span>
-				<span>Stack</span>
-				<span>Year</span>
+				<span>서비스</span>
+				<span>카테고리</span>
+				<span>기술</span>
+				<span>개발 연도</span>
 				<span></span>
 			</div>
 
@@ -125,20 +141,11 @@
 						<li class="r" id="list-{item.id}">
 							<div class="r-main">
 								<div class="thumb" aria-hidden="true">
-									<Phone>
-										<Screen
-											src={item.screens?.mobile}
-											srcDark={item.screens?.mobileDark}
-											name={item.name}
-											theme={item.theme}
-											mark={item.category === 'internal'}
-										/>
-									</Phone>
+									{@render phone(item)}
 								</div>
 								<div>
 									<div class="r-title">
 										<h3><a class="r-link" href="/archives/{item.id}">{item.name}</a></h3>
-										<span class="status status-{item.status}">{statusLabels[item.status]}</span>
 									</div>
 									<p>{item.summary ?? item.description}</p>
 									{#if item.makers.length}
@@ -148,16 +155,17 @@
 							</div>
 							<span class="r-cat">{categoryLabels[item.category]}</span>
 							<div class="r-stack">
-								{#each item.stack as s}<span class="tag">{s}</span>{:else}<span class="dim">—</span>{/each}
+								{#each item.stack as s}<span class="tag">{s}</span>{:else}<span class="dim">—</span
+									>{/each}
 							</div>
 							<span class="r-year">{item.year}</span>
-							<div class="r-cta">
-								{#if item.url}
-									<a class="icon-link" href={item.url} target="_blank" rel="noopener" aria-label="{item.name} 방문">↗</a>
-								{:else}
-									<span class="icon-link off" title="준비 중">·</span>
-								{/if}
-							</div>
+							<!--							<div class="r-cta">-->
+							<!--								{#if item.url}-->
+							<!--									<a class="icon-link" href={item.url} target="_blank" rel="noopener" aria-label="{item.name} 방문">↗</a>-->
+							<!--								{:else}-->
+							<!--									<span class="icon-link off" title="준비 중">·</span>-->
+							<!--								{/if}-->
+							<!--							</div>-->
 						</li>
 					{/each}
 				</ul>
@@ -173,9 +181,14 @@
 		<section class="row submit">
 			<div class="submit-copy">
 				<h2>프로젝트 추가하기</h2>
-				<p>부원이 만든 서비스는 <code>src/lib/archives.js</code>에 항목을 추가하면 이 페이지에 표시됩니다.</p>
+				<p>
+					부원이 만든 서비스는 <code>src/lib/archives.js</code>에 항목을 추가하면 이 페이지에
+					표시됩니다.
+				</p>
 			</div>
-			<a class="btn btn-line" href="https://github.com/sunrin-ana" target="_blank" rel="noopener">GitHub ↗</a>
+			<a class="btn btn-line" href="https://github.com/sunrin-ana" target="_blank" rel="noopener"
+				>GitHub ↗</a
+			>
 		</section>
 	</div>
 </main>
@@ -237,19 +250,6 @@
 		display: flex;
 		flex-direction: column;
 		align-items: inherit;
-	}
-	.tile-status {
-		display: inline-flex;
-		align-items: center;
-		gap: 6px;
-		font-size: 0.8rem;
-		color: var(--ink-3);
-	}
-	.tile-status i {
-		width: 6px;
-		height: 6px;
-		border-radius: 50%;
-		background: var(--ok);
 	}
 	.tile h2 {
 		margin: 10px 0 6px;
@@ -357,7 +357,7 @@
 		font-weight: 500;
 		height: 38px;
 		padding: 0 16px;
-		border-radius: var(--pill);
+		border-radius: 5px;
 		border: 1px solid var(--line);
 		background: var(--surface);
 		color: var(--ink-2);
@@ -393,7 +393,9 @@
 		border-radius: var(--pill);
 		background: var(--surface-2);
 		border: 1px solid transparent;
-		transition: border-color 0.15s, background 0.15s;
+		transition:
+			border-color 0.15s,
+			background 0.15s;
 	}
 	.search:focus-within {
 		background: var(--surface);
@@ -429,7 +431,6 @@
 	}
 	.thead {
 		padding: 0 0 12px;
-		border-bottom: 1px solid var(--ink);
 		font-size: 11px;
 		color: var(--ink-3);
 	}
@@ -531,22 +532,6 @@
 		margin-top: 8px;
 		font-size: 12px;
 		color: var(--ink-3);
-	}
-	.status {
-		font-size: 11px;
-		font-weight: 500;
-		padding: 2px 8px;
-		border-radius: var(--pill);
-		background: var(--surface-2);
-		color: var(--ink-3);
-	}
-	.status-live {
-		background: var(--ok-soft);
-		color: var(--ok-ink);
-	}
-	.status-beta {
-		background: var(--warn-soft);
-		color: var(--warn-ink);
 	}
 	.r-cat,
 	.r-year {

@@ -18,7 +18,7 @@
 			icon: 'arch' as const,
 			title: 'Architecture',
 			body: '그 서비스의 구조를 설계합니다'
-		},
+		}
 	];
 
 	/* ---------- history: side-scroll ---------- */
@@ -36,7 +36,10 @@
 		if (!track) return;
 		const card = track.querySelector<HTMLElement>('.tl-item');
 		const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-		track.scrollBy({ left: dir * (card?.offsetWidth ?? track.clientWidth), behavior: reduce ? 'auto' : 'smooth' });
+		track.scrollBy({
+			left: dir * (card?.offsetWidth ?? track.clientWidth),
+			behavior: reduce ? 'auto' : 'smooth'
+		});
 	}
 
 	$effect(() => {
@@ -46,7 +49,6 @@
 		ro.observe(track);
 		return () => ro.disconnect();
 	});
-
 </script>
 
 <svelte:head>
@@ -90,16 +92,39 @@
 					<h2 class="title">연혁</h2>
 				</div>
 				<div class="tl-nav">
-					<button type="button" class="tl-btn" aria-label="이전" disabled={atStart} onclick={() => step(-1)}>
-						<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M10 3.5 5.5 8l4.5 4.5" /></svg>
+					<button
+						type="button"
+						class="tl-btn"
+						aria-label="이전"
+						disabled={atStart}
+						onclick={() => step(-1)}
+					>
+						<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"
+							><path d="M10 3.5 5.5 8l4.5 4.5" /></svg
+						>
 					</button>
-					<button type="button" class="tl-btn" aria-label="다음" disabled={atEnd} onclick={() => step(1)}>
-						<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5" /></svg>
+					<button
+						type="button"
+						class="tl-btn"
+						aria-label="다음"
+						disabled={atEnd}
+						onclick={() => step(1)}
+					>
+						<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"
+							><path d="M6 3.5 10.5 8 6 12.5" /></svg
+						>
 					</button>
 				</div>
 			</header>
 			<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
-			<div class="tl-track" bind:this={track} onscroll={updateEnds} tabindex="0" role="region" aria-label="연혁 목록">
+			<div
+				class="tl-track"
+				bind:this={track}
+				onscroll={updateEnds}
+				tabindex="0"
+				role="region"
+				aria-label="연혁 목록"
+			>
 				<ol class="tl-list">
 					{#each history as h}
 						<li class="tl-item" class:filled={!!h.title}>
@@ -136,7 +161,13 @@
 						<span class="icons">
 							{#each g.keys as key}
 								<span class="tile" title={tech[key].label}>
-									<img src={tech[key].src} alt={tech[key].label} width="26" height="26" loading="lazy" />
+									<img
+										src={tech[key].src}
+										alt={tech[key].label}
+										width="26"
+										height="26"
+										loading="lazy"
+									/>
 								</span>
 							{/each}
 						</span>
@@ -148,12 +179,16 @@
 		<!-- ============ CTA ============ -->
 		<section class="row cta-row">
 			<div class="cta">
-				<div class="cta-grain" aria-hidden="true"></div>
 				<div class="cta-glow" aria-hidden="true"></div>
 				<h2>어두운 곳에서 세상을<br />밝게 만드는 동아리</h2>
 				<p>모집 소식은 인스타그램 @sunrin_ana에서 확인할 수 있습니다.</p>
 				<div class="cta-btns">
-					<a class="btn btn-white btn-lg" href="https://instagram.com/sunrin_ana" target="_blank" rel="noopener">인스타그램</a>
+					<a
+						class="btn btn-white btn-lg"
+						href="https://instagram.com/sunrin_ana"
+						target="_blank"
+						rel="noopener">인스타그램</a
+					>
 					<a class="btn btn-glass btn-lg" href="mailto:ana@sunrint.hs.kr">문의하기</a>
 				</div>
 			</div>
@@ -200,11 +235,6 @@
 	}
 
 	/* ---------- Why AnA (inside the frame) ---------- */
-	.why-row :global(.grid) {
-		border-left: 0;
-		border-right: 0;
-		border-bottom: 0;
-	}
 
 	/* ---------- Cells ---------- */
 	.cells {
@@ -236,8 +266,7 @@
 		line-height: 1.65;
 	}
 
-	/* ---------- Shared: left-aligned section copy ---------- */
-	.tl-copy .subtitle,
+	/* ---------- Stack: left-aligned section copy ---------- */
 	.stack-copy .subtitle {
 		color: color-mix(in srgb, var(--ink) 68%, transparent);
 	}
@@ -479,16 +508,6 @@
 		padding: 112px 24px 124px;
 		border-radius: var(--radius-lg);
 		color: var(--on-fill);
-		background: linear-gradient(180deg, var(--brand-fill), var(--brand-fill-2));
-	}
-	.cta-grain {
-		position: absolute;
-		inset: 0;
-		z-index: -1;
-		background-image: radial-gradient(color-mix(in srgb, var(--on-fill) 16%, transparent) 0.8px, transparent 1.1px);
-		background-size: 6px 6px;
-		mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.3), #000 85%);
-		-webkit-mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.3), #000 85%);
 	}
 	.cta-glow {
 		position: absolute;
@@ -498,7 +517,12 @@
 		width: 90%;
 		height: 90%;
 		transform: translateX(-50%);
-		background: radial-gradient(closest-side, rgba(255, 255, 255, 0.55), color-mix(in srgb, var(--accent-2) 45%, transparent) 45%, transparent);
+		background: radial-gradient(
+			closest-side,
+			rgba(255, 255, 255, 0.55),
+			color-mix(in srgb, var(--accent-2) 45%, transparent) 45%,
+			transparent
+		);
 		filter: blur(8px);
 	}
 	.cta h2 {

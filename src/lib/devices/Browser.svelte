@@ -20,7 +20,7 @@
 		border: 1px solid var(--line);
 		border-radius: 12px;
 		background: var(--surface);
-		box-shadow: 0 30px 60px -36px color-mix(in srgb, var(--ink) 30%, transparent);
+		box-shadow: 0 12px 24px -16px color-mix(in srgb, var(--ink) 30%, transparent);
 	}
 	.bar {
 		display: grid;

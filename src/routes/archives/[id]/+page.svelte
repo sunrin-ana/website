@@ -8,7 +8,7 @@
 	import Browser from '$lib/devices/Browser.svelte';
 	import Screen from '$lib/devices/Screen.svelte';
 	import { reveal } from '$lib/reveal.js';
-	import { categoryLabels, statusLabels } from '$lib/archives.js';
+	import { categoryLabels } from '$lib/archives.js';
 
 	let { data } = $props();
 	const item = $derived(data.item);
@@ -27,7 +27,9 @@
 	const showLaptop = $derived(!!item.screens?.desktop || !showPhone);
 	const splashOnly = $derived(!item.screens?.desktop && !item.screens?.mobile);
 	const others = $derived(
-		[data.prev, data.next].filter((o, i, arr) => o && o.id !== item.id && arr.findIndex((x) => x?.id === o.id) === i)
+		[data.prev, data.next].filter(
+			(o, i, arr) => o && o.id !== item.id && arr.findIndex((x) => x?.id === o.id) === i
+		)
 	);
 
 	const LOGO =
@@ -40,13 +42,23 @@
 </svelte:head>
 
 {#snippet appIcon(it: typeof item, size: string)}
-	<span class="app-icon" style="--from:{it.theme[0]}; --to:{it.theme[1]}; --s:{size}" aria-hidden="true">
+	<span
+		class="app-icon"
+		style="--from:{it.theme[0]}; --to:{it.theme[1]}; --s:{size}"
+		aria-hidden="true"
+	>
 		{#if it.category === 'internal'}
-			<svg viewBox="0 0 52 52"><path fill-rule="evenodd" clip-rule="evenodd" d={LOGO} fill="#fff" /></svg>
+			<svg viewBox="0 0 52 52"
+				><path fill-rule="evenodd" clip-rule="evenodd" d={LOGO} fill="#fff" /></svg
+			>
 		{:else}
 			<span class="initial">{it.name.slice(0, 1)}</span>
 		{/if}
 	</span>
+{/snippet}
+
+{#snippet shot(src?: string, srcDark?: string, alt = '', eager = false)}
+	<Screen {src} {srcDark} {alt} name={item.name} theme={item.theme} mark={internal} {eager} />
 {/snippet}
 
 <Nav />
@@ -65,16 +77,17 @@
 			{@render appIcon(item, '88px')}
 			<h1>{item.name}</h1>
 			<p class="tagline">{item.tagline}</p>
-			<p class="meta">
-				<span class="status status-{item.status}">{statusLabels[item.status]}</span>
-			</p>
 			{#if item.url || item.repo}
 				<div class="actions">
 					{#if item.url}
-						<a class="btn btn-brand btn-lg" href={item.url} target="_blank" rel="noopener">방문하기</a>
+						<a class="btn btn-brand btn-lg" href={item.url} target="_blank" rel="noopener"
+							>방문하기</a
+						>
 					{/if}
 					{#if item.repo}
-						<a class="btn btn-line btn-lg" href={item.repo} target="_blank" rel="noopener">소스 코드</a>
+						<a class="btn btn-line btn-lg" href={item.repo} target="_blank" rel="noopener"
+							>소스 코드</a
+						>
 					{/if}
 				</div>
 			{/if}
@@ -86,30 +99,24 @@
 				{#if showLaptop}
 					<div class="laptop-wrap">
 						<Laptop>
-							<Screen
-								src={item.screens?.desktop}
-								srcDark={item.screens?.desktopDark}
-								alt="{item.name} 데스크톱 화면"
-								name={item.name}
-								theme={item.theme}
-								mark={internal}
-								eager
-							/>
+							{@render shot(
+								item.screens?.desktop,
+								item.screens?.desktopDark,
+								`${item.name} 데스크톱 화면`,
+								true
+							)}
 						</Laptop>
 					</div>
 				{/if}
 				{#if showPhone}
 					<div class="phone-wrap">
 						<Phone>
-							<Screen
-								src={item.screens?.mobile}
-								srcDark={item.screens?.mobileDark}
-								alt="{item.name} 모바일 화면"
-								name={item.name}
-								theme={item.theme}
-								mark={internal}
-								eager
-							/>
+							{@render shot(
+								item.screens?.mobile,
+								item.screens?.mobileDark,
+								`${item.name} 모바일 화면`,
+								true
+							)}
 						</Phone>
 					</div>
 				{/if}
@@ -125,15 +132,15 @@
 			</div>
 			<dl class="facts reveal" use:reveal style="--d:0.08s">
 				<div>
-					<dt>분류</dt>
+					<dt>카테고리</dt>
 					<dd>{categoryLabels[item.category]}</dd>
 				</div>
 				<div>
-					<dt>연도</dt>
+					<dt>개발 연도</dt>
 					<dd>{item.year}</dd>
 				</div>
 				<div>
-					<dt>만든 사람</dt>
+					<dt>by</dt>
 					<dd>{item.makers.join(', ')}</dd>
 				</div>
 				{#if item.stack.length}
@@ -147,13 +154,17 @@
 				{#if item.url}
 					<div>
 						<dt>주소</dt>
-						<dd><a class="text-link" href={item.url} target="_blank" rel="noopener">{host} ↗</a></dd>
+						<dd>
+							<a class="text-link" href={item.url} target="_blank" rel="noopener">{host} ↗</a>
+						</dd>
 					</div>
 				{/if}
 				{#if item.repo}
 					<div>
 						<dt>소스 코드</dt>
-						<dd><a class="text-link" href={item.repo} target="_blank" rel="noopener">{repoLabel} ↗</a></dd>
+						<dd>
+							<a class="text-link" href={item.repo} target="_blank" rel="noopener">{repoLabel} ↗</a>
+						</dd>
 					</div>
 				{/if}
 			</dl>
@@ -166,16 +177,21 @@
 					<h2>{h.title}</h2>
 					<p>{h.body}</p>
 				</div>
-				<div class="hl-media reveal" class:mobile={h.device === 'mobile'} use:reveal style="--d:0.08s">
+				<div
+					class="hl-media reveal"
+					class:mobile={h.device === 'mobile'}
+					use:reveal
+					style="--d:0.08s"
+				>
 					{#if h.device === 'mobile'}
 						<div class="hl-phone">
 							<Phone>
-								<Screen src={h.image} srcDark={h.imageDark} alt={h.alt ?? ''} name={item.name} theme={item.theme} mark={internal} />
+								{@render shot(h.image, h.imageDark, h.alt)}
 							</Phone>
 						</div>
 					{:else}
 						<Browser url={host}>
-							<Screen src={h.image} srcDark={h.imageDark} alt={h.alt ?? ''} name={item.name} theme={item.theme} mark={internal} />
+							{@render shot(h.image, h.imageDark, h.alt)}
 						</Browser>
 					{/if}
 				</div>
@@ -197,7 +213,9 @@
 								<span class="more-name">{o.name}</span>
 								<span class="more-tag">{o.tagline}</span>
 							</span>
-							<svg class="more-arrow" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5" /></svg>
+							<svg class="more-arrow" viewBox="0 0 16 16" aria-hidden="true"
+								><path d="M6 3l5 5-5 5" /></svg
+							>
 						</a>
 					{/if}
 				{/each}
@@ -287,26 +305,7 @@
 		font-size: clamp(1.1rem, 1.6vw, 1.35rem);
 		color: var(--ink-2);
 	}
-	.meta {
-		display: flex;
-		margin: 18px 0 0;
-	}
-	.status {
-		font-size: 12px;
-		font-weight: 500;
-		padding: 2px 9px;
-		border-radius: var(--pill);
-		background: var(--surface-2);
-		color: var(--ink-3);
-	}
-	.status-live {
-		background: var(--ok-soft);
-		color: var(--ok-ink);
-	}
-	.status-beta {
-		background: var(--warn-soft);
-		color: var(--warn-ink);
-	}
+
 	.actions {
 		display: flex;
 		flex-wrap: wrap;
